@@ -102,6 +102,11 @@ export function makeSupabaseBackend(url, anonKey) {
       async signOut() {
         await sb.auth.signOut();
       },
+      async factorForReset() {
+        await sb.auth.getSession(); // picks up the sign-in from the reset link
+        const factors = must(await sb.auth.mfa.listFactors());
+        return factors.totp.find((f) => f.status === 'verified')?.id || null;
+      },
       async sendReset(email) {
         must(await sb.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}admin/reset` }));
       },

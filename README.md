@@ -1,12 +1,20 @@
-# React + Vite
+# NYC Barbershop website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Website and online booking for NYC Barbershop, Coomera East Shopping Centre.
 
-Currently, two official plugins are available:
+- **Demo:** https://roboy2911.github.io/nyc-barbershop/ (admin at `/admin`, password `demo1234`, any 6-digit code)
+- **Going live:** see [SETUP.md](SETUP.md)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Run locally
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Structure
+- `src/pages` – public pages (Home, Services, Book, Reviews, Contact, Cancel)
+- `src/pages/admin` – admin page
+- `src/lib` – data layer (`demoBackend` in the browser, `supabaseBackend` when live)
+- `supabase/migrations` – database tables and security rules
+- `supabase/functions` – server functions (bookings, cancellations, admin actions, emails)
+- `supabase/functions/_shared/availability.js` – booking rules shared by the site and server
