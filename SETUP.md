@@ -13,56 +13,49 @@ All services below have free plans that cover a single shop.
 
 ## 2. Supabase (database + admin logins)
 
-1. Sign up at **supabase.com** (use the shop's email) → **New project**. Region: **Sydney**. Save the database password somewhere safe.
+1. Sign up at **supabase.com** → **New project**. Region: **Sydney**. Save the database password somewhere safe.
 2. **SQL Editor → New query** → paste all of `supabase/migrations/001_init.sql` → **Run**.
-3. **Authentication → Sign In / Providers → Email**:
-   - Turn **off** "Allow new users to sign up" (nobody can create their own account).
-   - Turn **on** "Secure password change".
-4. **Authentication → Multi-Factor** → make sure **TOTP (App Authenticator)** is enabled.
-5. **Authentication → URL Configuration**: set **Site URL** to the website address (e.g. `https://nycbarbershop.com.au`) and add `https://nycbarbershop.com.au/admin/reset` to **Redirect URLs**.
-6. **Authentication → Users → Add user → Create new user** – once for the owner, once for you. Tick "Auto confirm user".
-7. Make both of them admins – **SQL Editor**, run (change the emails):
+3. **Authentication → Sign In / Providers → Email**: turn **off** "Allow new users to sign up", turn **on** "Secure password change".
+4. **Authentication → URL Configuration**: **Site URL** = the website address (e.g. `https://roboy2911.github.io/nyc-barbershop`), and add `<that address>/admin/reset` to **Redirect URLs**.
+5. **Authentication → Users → Add user → Create new user** for each admin (tick "Auto confirm user").
+6. Make them admins – **SQL Editor**, run (change the emails):
    ```sql
    insert into public.admins (user_id, label)
    select id, email from auth.users
    where email in ('owner@example.com', 'you@example.com');
    ```
-8. **Project Settings → API**: copy the **Project URL** and the **anon public** key – needed in step 4.
 
-The first time each admin signs in at `/admin`, they'll be asked to scan a QR code with Google Authenticator or Microsoft Authenticator. After that they need password + 6-digit code every time.
+The first time each admin signs in at `/admin` they scan a QR code with Google Authenticator or Microsoft Authenticator. After that they need password + 6-digit code every time.
 
-## 3. Emails (Resend)
+## 3. Connect GitHub to Supabase (automatic deploys)
 
-1. Sign up at **resend.com** → **Domains → Add domain** → `nycbarbershop.com.au` → add the DNS records it shows in VentraIP's DNS settings → wait for "Verified".
+Every push to `main` runs `.github/workflows/deploy.yml`, which deploys the server functions to Supabase and the website to GitHub Pages.
+
+1. Supabase → your avatar → **Account preferences → Access Tokens** → **Generate new token**. Copy it.
+2. GitHub repo → **Settings → Secrets and variables → Actions**:
+   - **Secrets** tab → New repository secret: `SUPABASE_ACCESS_TOKEN` = the token.
+   - **Variables** tab → add:
+     - `SUPABASE_PROJECT_REF` – the ID in your project's address (`supabase.com/dashboard/project/<this part>`)
+     - `SITE_URL` – the website address, e.g. `https://roboy2911.github.io/nyc-barbershop`
+     - `VITE_SUPABASE_URL` – Supabase **Project Settings → API** (or Data API) → Project URL
+     - `VITE_SUPABASE_ANON_KEY` – Supabase **Project Settings → API Keys** → the **publishable** key (or legacy **anon public** key)
+     - `BASE_PATH` – only when using a custom domain: set to `/`
+3. GitHub → **Actions → Deploy → Run workflow**.
+
+The project URL and publishable/anon key are safe to be public – the database rules only let them read opening hours, barbers and free times, never customer details.
+
+## 4. Emails (Resend) – after the domain is registered
+
+1. Sign up at **resend.com** → **Domains → Add domain** → `nycbarbershop.com.au` → add the DNS records it shows in VentraIP → wait for "Verified".
 2. **API Keys → Create** → copy the key.
-3. Install the Supabase CLI (`npm i -g supabase`), then from this folder:
-   ```bash
-   supabase login
-   supabase link --project-ref YOUR-PROJECT-REF
-   supabase secrets set RESEND_API_KEY=re_xxx \
-     EMAIL_FROM="NYC Barbershop <bookings@nycbarbershop.com.au>" \
-     SITE_URL=https://nycbarbershop.com.au \
-     ALLOWED_ORIGIN=https://nycbarbershop.com.au
-   supabase functions deploy create-booking
-   supabase functions deploy cancel-booking
-   supabase functions deploy admin-action
-   ```
+3. Supabase → **Edge Functions → Secrets** → add `RESEND_API_KEY` = the key and `EMAIL_FROM` = `NYC Barbershop <bookings@nycbarbershop.com.au>`.
+4. For password-reset emails: Supabase **Authentication → Emails → SMTP Settings** → host `smtp.resend.com`, port 465, user `resend`, password = the API key.
 
-Supabase's built-in emails (password reset) work straight away but are limited to a few per hour. For reliability, in Supabase **Authentication → Emails → SMTP Settings** enter Resend's SMTP details (host `smtp.resend.com`, port 465, user `resend`, password = the API key).
+Until then bookings still work, but customers won't get confirmation emails (Supabase's built-in password-reset email still works, limited to a few per hour).
 
-## 4. Website hosting
+## 5. Custom domain
 
-The site is a static site. Either:
-
-- **GitHub Pages** (current demo): build with the env vars below and push `dist/` to the `gh-pages` branch. For the custom domain: repo **Settings → Pages → Custom domain** → `nycbarbershop.com.au`, and add the DNS records GitHub shows in VentraIP. Then rebuild with `BASE_PATH=/`.
-- **Netlify / Vercel / Cloudflare Pages** (recommended once live – handles page links better): import the GitHub repo, build command `npm run build`, output folder `dist`, and add the env vars below. Add a rewrite of `/*` to `/index.html`.
-
-Environment variables (from step 2.8):
-```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
-```
-The anon key is safe to be public – the database rules only let it read opening hours, barbers and free times, never customer details.
+GitHub repo **Settings → Pages → Custom domain** → `nycbarbershop.com.au`, add the DNS records GitHub shows in VentraIP, tick **Enforce HTTPS**. Then set the `BASE_PATH` variable to `/`, update `SITE_URL` and the Supabase URL settings to the new address, and re-run the Deploy workflow.
 
 ---
 

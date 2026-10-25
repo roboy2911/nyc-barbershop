@@ -38,7 +38,7 @@ jobs:
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
         run: |
           for f in create-booking cancel-booking admin-action; do
-            supabase functions deploy "$f" --project-ref "$PROJECT_REF" --use-api
+            supabase functions deploy "$f" --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
           done
 
   site:
