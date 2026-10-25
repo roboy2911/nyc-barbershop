@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { Component, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { api } from './lib/api.js';
 import Header from './components/Header.jsx';
@@ -16,9 +16,32 @@ import { getDayHours, qldNow, addDays, prettyDate } from '../supabase/functions/
 const DataCtx = createContext(null);
 export const useShop = () => useContext(DataCtx);
 
+// If a page ever crashes, show a message instead of a blank screen.
+class ErrorBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(err) {
+    console.error(err);
+  }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <div className="container page center">
+        <h2>Something went wrong</h2>
+        <p className="muted">Sorry about that. Please reload the page.</p>
+        <button className="btn" onClick={() => window.location.reload()}>Reload</button>
+      </div>
+    );
+  }
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return null;
 }
 
@@ -70,6 +93,7 @@ export default function App() {
       {data && !isAdmin && <SpecialBanner data={data} />}
       {error && <div className="container" style={{ paddingTop: 24 }}><div className="error">{error}</div></div>}
       <main>
+        <ErrorBoundary key={pathname}>
         {data ? (
           <Routes>
             <Route path="/" element={<Home />} />
@@ -85,6 +109,7 @@ export default function App() {
         ) : (
           !error && <div className="container page center muted">Loading…</div>
         )}
+        </ErrorBoundary>
       </main>
       {!isAdmin && data && <Footer />}
     </DataCtx.Provider>

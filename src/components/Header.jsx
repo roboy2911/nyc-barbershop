@@ -11,7 +11,9 @@ const LINKS = [
 export default function Header({ admin }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <header className="site-header">
@@ -28,13 +30,13 @@ export default function Header({ admin }) {
             <ul className={`nav-links${open ? ' open' : ''}`}>
               {LINKS.map((l) => (
                 <li key={l.to}>
-                  <NavLink to={l.to} end={l.end}>
+                  <NavLink to={l.to} end={l.end} onClick={() => setOpen(false)}>
                     {l.label}
                   </NavLink>
                 </li>
               ))}
               <li>
-                <NavLink to="/book" className="cta">
+                <NavLink to="/book" className="cta" onClick={() => setOpen(false)}>
                   Book Now
                 </NavLink>
               </li>
