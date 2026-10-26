@@ -75,7 +75,15 @@ export async function sendEmail(email: Email) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [email.to], subject: email.subject, html: email.html, text: email.text }),
+    body: JSON.stringify({
+      from,
+      to: [email.to],
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+      // Where customer replies go (e.g. the shop's normal inbox).
+      ...(Deno.env.get('EMAIL_REPLY_TO') ? { reply_to: Deno.env.get('EMAIL_REPLY_TO') } : {}),
+    }),
   });
   if (!res.ok) console.error('Email failed', res.status, await res.text());
 }
