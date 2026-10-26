@@ -157,7 +157,7 @@ export default function App() {
         <ErrorBoundary key={pathname}>
         <Suspense fallback={<PageSkeleton />}>
         {data ? (
-          <div className="page-fade" key={pathname}>
+          <div className={pathname === '/' ? undefined : 'page-fade'} key={pathname}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
