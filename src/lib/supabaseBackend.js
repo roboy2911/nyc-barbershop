@@ -108,43 +108,21 @@ export function makeSupabaseBackend(url, anonKey) {
       });
     },
 
-    // ---------------- admin login (password + 2FA) ----------------
+    // ---------------- admin login (email + password) ----------------
     auth: {
       async signIn(email, password) {
         const { error } = await (await client()).auth.signInWithPassword({ email, password });
         if (error) throw new Error('Wrong email or password.');
-        const factors = must(await (await client()).auth.mfa.listFactors());
-        const totp = factors.totp.find((f) => f.status === 'verified');
-        if (totp) return { step: 'challenge', factorId: totp.id };
-        return { step: 'enroll' };
-      },
-      async enrollMfa() {
-        // Remove any half-finished setup first.
-        const factors = must(await (await client()).auth.mfa.listFactors());
-        for (const f of factors.all.filter((x) => x.status !== 'verified')) await (await client()).auth.mfa.unenroll({ factorId: f.id });
-        const d = must(await (await client()).auth.mfa.enroll({ factorType: 'totp', friendlyName: 'NYC Barbershop admin' }));
-        return { factorId: d.id, qr: d.totp.qr_code, secret: d.totp.secret };
-      },
-      async verifyMfa(factorId, code) {
-        const { error } = await (await client()).auth.mfa.challengeAndVerify({ factorId, code });
-        if (error) throw new Error('That code is wrong or expired. Try the newest code.');
-        return true;
+        return { step: 'done' };
       },
       async getAdmin() {
         const { data } = await (await client()).auth.getSession();
         if (!data.session) return null;
-        const aal = must(await (await client()).auth.mfa.getAuthenticatorAssuranceLevel());
-        if (aal.currentLevel !== 'aal2') return null;
         const row = must(await (await client()).from('admins').select('user_id').eq('user_id', data.session.user.id).maybeSingle());
         return row ? { email: data.session.user.email } : null;
       },
       async signOut() {
         await (await client()).auth.signOut();
-      },
-      async factorForReset() {
-        await (await client()).auth.getSession(); // picks up the sign-in from the reset link
-        const factors = must(await (await client()).auth.mfa.listFactors());
-        return factors.totp.find((f) => f.status === 'verified')?.id || null;
       },
       async sendReset(email) {
         must(await (await client()).auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}admin/reset` }));

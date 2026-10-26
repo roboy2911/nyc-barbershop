@@ -25,7 +25,7 @@ All services below have free plans that cover a single shop.
    where email in ('owner@example.com', 'you@example.com');
    ```
 
-The first time each admin signs in at `/admin` they scan a QR code with Google Authenticator or Microsoft Authenticator. After that they need password + 6-digit code every time.
+Admins sign in at `/admin` with their email and password.
 
 ## 3. Connect GitHub to Supabase (automatic deploys)
 
@@ -75,8 +75,7 @@ GitHub repo **Settings → Pages → Custom domain** → `nycbarbershop.com.au`,
 ## How the admin page is protected
 
 - Login is handled by Supabase: passwords are stored hashed, never in the website code.
-- Every admin needs a 6-digit authenticator code as well as the password (2FA).
-- The database itself refuses changes unless the request comes from someone in the `admins` table **who has passed 2FA** – so even someone who finds the admin page, or the site's code, can't change anything.
+- The database itself refuses changes unless the request comes from someone signed in who is in the `admins` table – so even someone who finds the admin page, or the site's code, can't change anything.
 - Sign-ups are switched off, so nobody can create their own account.
 - Supabase limits repeated login attempts.
 - Admin sessions end when the browser closes, or after 30 minutes of no activity.

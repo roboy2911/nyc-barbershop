@@ -267,20 +267,11 @@ export const demoBackend = {
       await delay();
       const pw = localStorage.getItem(DEMO_PASSWORD_KEY) || 'demo1234';
       if (password !== pw) throw new Error('Wrong email or password.');
-      session = { email, aal: 'aal1' };
-      return { step: 'challenge', factorId: 'demo' };
-    },
-    async enrollMfa() {
-      return { factorId: 'demo', qr: null, secret: 'DEMO-MODE' };
-    },
-    async verifyMfa(_factorId, code) {
-      await delay();
-      if (!/^\d{6}$/.test(code)) throw new Error('Enter the 6-digit code.');
-      session = { ...session, aal: 'aal2' };
-      return true;
+      session = { email };
+      return { step: 'done' };
     },
     async getAdmin() {
-      return session?.aal === 'aal2' ? { email: session.email } : null;
+      return session ? { email: session.email } : null;
     },
     async signOut() {
       session = null;

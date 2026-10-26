@@ -80,22 +80,13 @@ export async function sendEmail(email: Email) {
   if (!res.ok) console.error('Email failed', res.status, await res.text());
 }
 
-/** Checks the caller is a signed-in admin who has passed 2FA. */
+/** Checks the caller is a signed-in admin. */
 export async function requireAdmin(req: Request, db: SupabaseClient) {
   const auth = req.headers.get('Authorization') || '';
   const token = auth.replace(/^Bearer\s+/i, '');
   if (!token) return null;
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) return null;
-  // The token was verified by getUser above; read its 2FA level.
-  let aal = '';
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    aal = payload.aal;
-  } catch {
-    return null;
-  }
-  if (aal !== 'aal2') return null;
   const { data: row } = await db.from('admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
   return row ? data.user : null;
 }

@@ -36,7 +36,7 @@ export default function AccountTab({ admin }) {
   return (
     <div style={{ maxWidth: 520 }}>
       <h2>Account &amp; password</h2>
-      <p className="muted">Signed in as <strong>{admin.email}</strong>. Two-step sign in is on. You'll be signed out automatically after 30 minutes of no activity.</p>
+      <p className="muted">Signed in as <strong>{admin.email}</strong>. You'll be signed out automatically after 30 minutes of no activity. Use a strong password that you don't use anywhere else.</p>
       <div className="card">
         <h3>Change password</h3>
         {msg.err && <div className="error">{msg.err}</div>}
