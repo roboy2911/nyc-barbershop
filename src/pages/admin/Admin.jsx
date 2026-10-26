@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useShop } from '../../App.jsx';
 import Login from './Login.jsx';
@@ -18,7 +18,23 @@ import MessagesTab from './MessagesTab.jsx';
 import AccountTab from './AccountTab.jsx';
 import OutboxTab from './OutboxTab.jsx';
 
-const IDLE_LIMIT_MS = 30 * 60 * 1000; // sign out after 30 minutes of no activity
+const IDLE_LIMIT_MS = 12 * 60 * 60 * 1000; // sign out after 12 hours of no activity
+const ACTIVE_KEY = 'nyc-admin-last-active'; // remembered even if the browser is closed
+
+const readActive = () => {
+  try {
+    return Number(localStorage.getItem(ACTIVE_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+};
+const writeActive = (t) => {
+  try {
+    localStorage.setItem(ACTIVE_KEY, String(t));
+  } catch {
+    /* ignore */
+  }
+};
 
 const TABS = [
   ['today', 'Today', TodayTab],
@@ -42,7 +58,6 @@ export default function Admin() {
   const { refresh } = useShop();
   const [admin, setAdmin] = useState(undefined);
   const [tab, setTab] = useState('today');
-  const lastActive = useRef(Date.now());
   const [newCount, setNewCount] = useState(0);
 
   const check = useCallback(async () => {
@@ -76,15 +91,28 @@ export default function Admin() {
     return () => clearInterval(t);
   }, [admin]);
 
-  // Automatic sign-out when idle.
+  // Automatic sign-out after 12 hours without use (also checked when coming back
+  // after closing the browser).
   useEffect(() => {
     if (!admin) return;
-    const bump = () => (lastActive.current = Date.now());
+    const last = readActive();
+    if (last && Date.now() - last > IDLE_LIMIT_MS) {
+      signOut();
+      return;
+    }
+    writeActive(Date.now());
+    let lastWrite = Date.now();
+    const bump = () => {
+      if (Date.now() - lastWrite > 60000) {
+        lastWrite = Date.now();
+        writeActive(lastWrite);
+      }
+    };
     const events = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'];
     events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
     const t = setInterval(() => {
-      if (Date.now() - lastActive.current > IDLE_LIMIT_MS) signOut();
-    }, 30000);
+      if (Date.now() - readActive() > IDLE_LIMIT_MS) signOut();
+    }, 60000);
     return () => {
       events.forEach((e) => window.removeEventListener(e, bump));
       clearInterval(t);

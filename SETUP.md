@@ -78,7 +78,7 @@ GitHub repo **Settings → Pages → Custom domain** → `nycbarbershop.com.au`,
 - The database itself refuses changes unless the request comes from someone signed in who is in the `admins` table – so even someone who finds the admin page, or the site's code, can't change anything.
 - Sign-ups are switched off, so nobody can create their own account.
 - Supabase limits repeated login attempts.
-- Admin sessions end when the browser closes, or after 30 minutes of no activity.
+- Admins stay signed in on their device (even after closing the browser) and are signed out after 12 hours of no use. Use **Sign out** on shared computers.
 - The admin page isn't linked from the site and is hidden from search engines.
 - Customers can only see which times are taken – never names, phones or emails.
 - A barber can never be double-booked, even if two people book at the same moment (enforced by the database).

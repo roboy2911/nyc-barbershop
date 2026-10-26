@@ -34,7 +34,7 @@ export function makeSupabaseBackend(url, anonKey) {
   const client = () =>
     (clientPromise ||= import('@supabase/supabase-js').then(({ createClient }) =>
       createClient(url, anonKey, {
-        auth: { persistSession: true, storage: window.sessionStorage }, // admin login ends when the browser closes
+        auth: { persistSession: true, storage: window.localStorage }, // stays signed in after closing; Admin signs out after 12h unused
       }),
     ));
 
