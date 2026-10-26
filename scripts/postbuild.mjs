@@ -26,7 +26,7 @@ for (const [path, meta] of Object.entries(PAGES)) {
   writeFileSync(`dist${path}/index.html`, pageHtml(path, meta));
 }
 const noindex = '<meta name="robots" content="noindex, nofollow" />';
-for (const path of ['/admin', '/admin/reset', '/cancel']) {
+for (const path of ['/admin', '/admin/reset', '/cancel', '/unsubscribe']) {
   mkdirSync(`dist${path}`, { recursive: true });
   writeFileSync(`dist${path}/index.html`, pageHtml(path, { title: 'NYC Barbershop', description: '' }, noindex));
 }

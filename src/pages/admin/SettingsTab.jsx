@@ -23,6 +23,7 @@ export default function SettingsTab({ refreshShop }) {
 
   async function save(e) {
     e.preventDefault();
+    if (s.googleReviewUrl && !/^https:\/\//.test(s.googleReviewUrl.trim())) return setMsg({ ok: '', err: 'The Google review link should start with https://' });
     try {
       await api.saveSettings({
         ...s,
@@ -84,6 +85,19 @@ export default function SettingsTab({ refreshShop }) {
         <div className="field">
           <label>Website banner (optional – shows at the top of every page)</label>
           <input type="text" maxLength={160} placeholder="e.g. Now open late Thursdays until 9pm!" value={s.banner || ''} onChange={(e) => setS({ ...s, banner: e.target.value })} />
+        </div>
+        <h3 style={{ marginTop: 20 }}>Google reviews</h3>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 12 }}>
+          <input type="checkbox" style={{ marginTop: 4 }} checked={s.reviewRequests ?? true} onChange={(e) => setS({ ...s, reviewRequests: e.target.checked })} />
+          <span>
+            Email customers a “How was your cut?” review request the day after their appointment
+            <span className="small muted" style={{ display: 'block' }}>Sent between 9am and 7pm, at most once every 90 days per customer, never after a no-show. Customers can unsubscribe. Starts once emails are set up.</span>
+          </span>
+        </label>
+        <div className="field">
+          <label>Google review link</label>
+          <input type="url" placeholder="https://g.page/r/…/review" value={s.googleReviewUrl || ''} onChange={(e) => setS({ ...s, googleReviewUrl: e.target.value })} />
+          <p className="muted small">Used by the review email and the “Review us on Google” buttons. For a link that opens the review box directly: Google Business Profile → “Ask for reviews” → copy link.</p>
         </div>
         <button className="btn">Save settings</button>
       </form>

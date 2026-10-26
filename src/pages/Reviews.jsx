@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { SHOP } from '../content.js';
+import { SHOP, reviewUrl } from '../content.js';
 import { useShop } from '../App.jsx';
 import GoogleBadge from '../components/GoogleBadge.jsx';
 import Icon from '../components/Icon.jsx';
@@ -31,7 +31,7 @@ export default function Reviews() {
           <h3>Been in for a cut?</h3>
           <p className="muted">We'd really appreciate a quick review – it helps other locals find us.</p>
           <div className="review-cta">
-            <a className="btn" href={SHOP.googleReview} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
+            <a className="btn" href={reviewUrl(data.settings)} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
             <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">See us on Google Maps</a>
           </div>
         </div>

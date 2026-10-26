@@ -20,6 +20,9 @@ export const SHOP = {
   googleReviewCount: null,
 };
 
+// The review link can be changed in Admin -> Settings; this is the fallback.
+export const reviewUrl = (settings) => settings?.googleReviewUrl || SHOP.googleReview;
+
 export const telHref = (phone) => `tel:+61${String(phone || '').replace(/\D/g, '').replace(/^0/, '')}`;
 export const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${SHOP.lat},${SHOP.lng}&travelmode=driving`;
 export const mapEmbedUrl = `https://maps.google.com/maps?q=${SHOP.lat},${SHOP.lng}&z=17&output=embed`;

@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   try {
     const { token, action } = await req.json();
-    if (!UUID_RE.test(String(token || ''))) return json({ error: 'This cancel link is not valid.' }, 400);
+    if (!UUID_RE.test(String(token || ''))) return json({ error: 'This link is not valid.' }, 400);
 
     const db = serviceClient();
     const { data: b, error } = await db.from('bookings').select('*, barbers(name)').eq('cancel_token', token).maybeSingle();
@@ -24,6 +24,11 @@ Deno.serve(async (req) => {
       guestName: b.guest_name,
       status: b.status,
     };
+
+    if (action === 'unsubscribe') {
+      if (b.email) await db.from('email_optouts').upsert({ email: b.email.toLowerCase() });
+      return json({ ok: true, unsubscribed: true });
+    }
 
     if (action === 'cancel' && b.status === 'confirmed') {
       const { error: upErr } = await db

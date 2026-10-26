@@ -9,6 +9,7 @@ import Book from './pages/Book.jsx';
 import Reviews from './pages/Reviews.jsx';
 import Contact from './pages/Contact.jsx';
 import Cancel from './pages/Cancel.jsx';
+import Unsubscribe from './pages/Unsubscribe.jsx';
 import MobileBar from './components/MobileBar.jsx';
 import { PAGES } from './lib/seo.js';
 import { trackView } from './lib/track.js';
@@ -135,7 +136,7 @@ export default function App() {
 
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith('/admin');
-  const showBar = !!data && !isAdmin && pathname !== '/book' && pathname !== '/cancel';
+  const showBar = !!data && !isAdmin && pathname !== '/book' && pathname !== '/cancel' && pathname !== '/unsubscribe';
   useReveal([pathname, data]);
   useEffect(() => {
     document.body.classList.toggle('has-mobile-bar', showBar);
@@ -165,6 +166,7 @@ export default function App() {
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/cancel" element={<Cancel />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/reset" element={<ResetPassword />} />
             <Route path="*" element={<div className="container page center"><h1>Page not found</h1></div>} />

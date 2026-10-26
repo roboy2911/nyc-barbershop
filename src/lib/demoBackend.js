@@ -188,6 +188,10 @@ export const demoBackend = {
     if (!b) throw new Error('This cancel link is not valid.');
     return { ...b, barberName: names(s)[b.barberId] };
   },
+  async unsubscribe() {
+    await delay();
+    return { ok: true };
+  },
   async cancelByToken(token) {
     await delay();
     return mutate((s) => {

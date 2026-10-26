@@ -11,6 +11,8 @@ export const fromDb = {
     banner: r.banner,
     aboutHeading: r.about_heading,
     aboutText: r.about_text,
+    reviewRequests: r.review_requests ?? true,
+    googleReviewUrl: r.google_review_url,
   }),
   service: (r) => ({
     id: r.id,
@@ -75,6 +77,8 @@ export const toDb = {
     banner: s.banner || null,
     about_heading: s.aboutHeading ?? null,
     about_text: s.aboutText ?? null,
+    review_requests: s.reviewRequests ?? true,
+    google_review_url: s.googleReviewUrl || null,
   }),
   service: (s) => ({
     name: s.name,

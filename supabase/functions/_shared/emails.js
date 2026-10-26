@@ -103,3 +103,18 @@ export function reminderEmail({ to, name, booking, barberName, siteUrl }) {
     text: `Hi ${name}, reminder: ${apptLine(booking, barberName)}. Can't make it? Cancel: ${siteUrl}/cancel?token=${booking.cancelToken} or call ${SHOP.phone}.`,
   };
 }
+
+export function reviewRequestEmail({ to, name, booking, barberName, reviewUrl, unsubscribeUrl, bookUrl }) {
+  const first = String(name || '').split(' ')[0] || 'there';
+  return {
+    to,
+    subject: `Thanks for coming in, ${first}! How was your cut?`,
+    html: layout('Thanks for coming in', `<p>Hi ${esc(first)}, thanks for visiting NYC Barbershop${barberName ? ` and sitting with ${esc(barberName)}` : ''} for your ${esc(booking.serviceName.toLowerCase())}.</p>
+<p>If you were happy with it, a quick Google review would mean a lot – it only takes a minute and helps other locals find us.</p>
+<p style="margin:24px 0"><a href="${esc(reviewUrl)}" style="background:#f2f2f2;color:#111;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold;letter-spacing:1px">★ LEAVE A REVIEW</a></p>
+<p>Not quite right? Just reply to this email or call us – we'll make it right.</p>
+<p><a href="${esc(bookUrl)}" style="color:#ddd">Book your next cut</a></p>
+<p style="color:#888;font-size:12px;margin-top:24px">Don't want emails like this? <a href="${esc(unsubscribeUrl)}" style="color:#888">Unsubscribe</a></p>`),
+    text: `Hi ${first}, thanks for coming in to NYC Barbershop. If you were happy with your ${booking.serviceName.toLowerCase()}, a quick Google review would mean a lot: ${reviewUrl}\nNot quite right? Reply or call ${SHOP.phone}.\nBook again: ${bookUrl}\nUnsubscribe: ${unsubscribeUrl}`,
+  };
+}

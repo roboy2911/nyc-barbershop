@@ -86,6 +86,9 @@ export function makeSupabaseBackend(url, anonKey) {
     async cancelLookup(token) {
       return (await fn('cancel-booking', { token, action: 'get' })).booking;
     },
+    async unsubscribe(token) {
+      return fn('cancel-booking', { token, action: 'unsubscribe' });
+    },
     async cancelByToken(token) {
       return (await fn('cancel-booking', { token, action: 'cancel' })).booking;
     },

@@ -5,7 +5,7 @@ import Gallery from '../components/Gallery.jsx';
 import Icon, { serviceIcon } from '../components/Icon.jsx';
 import GoogleBadge from '../components/GoogleBadge.jsx';
 import ReviewStrip from '../components/ReviewStrip.jsx';
-import { ABOUT, SHOP, directionsUrl, mapEmbedUrl, telHref } from '../content.js';
+import { ABOUT, SHOP, directionsUrl, mapEmbedUrl, reviewUrl, telHref } from '../content.js';
 import { money } from './Services.jsx';
 import { getDayHours, minToLabel, qldNow } from '../../supabase/functions/_shared/availability.js';
 
@@ -151,7 +151,7 @@ export default function Home() {
         <div className="container center" style={{ marginTop: 26 }}>
           <div className="review-cta">
             <Link to="/reviews" className="btn ghost">All reviews</Link>
-            <a className="btn ghost" href={SHOP.googleReview} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
+            <a className="btn ghost" href={reviewUrl(data.settings)} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
           </div>
         </div>
       </section>
