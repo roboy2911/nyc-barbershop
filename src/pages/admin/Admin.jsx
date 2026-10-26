@@ -36,28 +36,54 @@ const writeActive = (t) => {
   }
 };
 
-const TABS = [
-  ['today', 'Today', TodayTab],
-  ['new', 'Newest bookings', NewBookingsTab],
-  ['bookings', 'Bookings', BookingsTab],
-  ['customers', 'Customers', CustomersTab],
-  ['stats', 'Website visitors', StatsTab],
-  ['hours', 'Opening hours', HoursTab],
-  ['barbers', 'Barbers', BarbersTab],
-  ['breaks', 'Breaks', BreaksTab],
-  ['services', 'Services & prices', ServicesTab],
-  ['photos', 'Photos', PhotosTab],
-  ['reviews', 'Reviews', ReviewsTab],
-  ['settings', 'Settings', SettingsTab],
-  ['messages', 'Messages', MessagesTab],
-  ['account', 'Account & password', AccountTab],
+// Admin menu: groups on the left, with tabs along the top for each group's parts.
+const GROUPS = [
+  { id: 'today', label: 'Today', tabs: [['today', 'Today', TodayTab]] },
+  {
+    id: 'bookings',
+    label: 'Bookings',
+    tabs: [
+      ['calendar', 'Calendar', BookingsTab],
+      ['new', 'Newest', NewBookingsTab],
+      ['customers', 'Customers', CustomersTab],
+    ],
+  },
+  {
+    id: 'team',
+    label: 'Team & hours',
+    tabs: [
+      ['barbers', 'Barbers', BarbersTab],
+      ['breaks', 'Breaks', BreaksTab],
+      ['hours', 'Opening hours', HoursTab],
+    ],
+  },
+  {
+    id: 'website',
+    label: 'Website',
+    tabs: [
+      ['services', 'Services & prices', ServicesTab],
+      ['photos', 'Photos', PhotosTab],
+      ['reviews', 'Reviews', ReviewsTab],
+      ['stats', 'Visitors', StatsTab],
+    ],
+  },
+  { id: 'messages', label: 'Messages', tabs: [['messages', 'Messages', MessagesTab]] },
+  {
+    id: 'settings',
+    label: 'Settings',
+    tabs: [
+      ['settings', 'Shop settings', SettingsTab],
+      ['account', 'Account & password', AccountTab],
+      ...(api.mode === 'demo' ? [['outbox', 'Email outbox (demo)', OutboxTab]] : []),
+    ],
+  },
 ];
-if (api.mode === 'demo') TABS.push(['outbox', 'Email outbox (demo)', OutboxTab]);
 
 export default function Admin() {
   const { refresh } = useShop();
   const [admin, setAdmin] = useState(undefined);
-  const [tab, setTab] = useState('today');
+  const [groupId, setGroupId] = useState('today');
+  const [subs, setSubs] = useState({}); // remembers the open tab in each group
   const [newCount, setNewCount] = useState(0);
 
   // Only the newest check is allowed to update the screen, so a slow older
@@ -144,20 +170,32 @@ export default function Admin() {
   if (admin === undefined) return <div className="container page muted">Checking sign-in…</div>;
   if (!admin) return <Login onDone={check} />;
 
-  const Current = TABS.find((t) => t[0] === tab)[2];
+  const group = GROUPS.find((g) => g.id === groupId);
+  const subId = subs[groupId] || group.tabs[0][0];
+  const Current = group.tabs.find((t) => t[0] === subId)[2];
   return (
     <div className="admin-shell">
       <nav className="admin-side">
-        {TABS.map(([id, label]) => (
-          <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
-            {label}
-            {id === 'new' && newCount > 0 && <span className="nav-count">{newCount > 49 ? '50+' : newCount}</span>}
+        {GROUPS.map((g) => (
+          <button key={g.id} className={groupId === g.id ? 'on' : ''} onClick={() => setGroupId(g.id)}>
+            {g.label}
+            {g.id === 'bookings' && newCount > 0 && <span className="nav-count">{newCount > 49 ? '50+' : newCount}</span>}
           </button>
         ))}
         <button onClick={signOut}>Sign out</button>
       </nav>
       <section className="admin-main">
-        <Current admin={admin} refreshShop={refresh} onSeen={() => setNewCount(0)} />
+        {group.tabs.length > 1 && (
+          <div className="subtabs no-print" role="tablist">
+            {group.tabs.map(([id, label]) => (
+              <button key={id} role="tab" aria-selected={subId === id} className={subId === id ? 'on' : ''} onClick={() => setSubs({ ...subs, [groupId]: id })}>
+                {label}
+                {id === 'new' && newCount > 0 && <span className="nav-count">{newCount > 49 ? '50+' : newCount}</span>}
+              </button>
+            ))}
+          </div>
+        )}
+        <Current key={subId} admin={admin} refreshShop={refresh} onSeen={() => setNewCount(0)} />
       </section>
     </div>
   );

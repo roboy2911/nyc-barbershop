@@ -507,3 +507,7 @@ h2 { letter-spacing: 0.08em; }
 .foot-hours tr.today td { color: var(--text); font-weight: 600; }
 .foot-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .btn.btn-del:hover { border-color: var(--danger); color: #ffb3b3; background: #2a1414; }
+.subtabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: -4px 0 22px; overflow-x: auto; }
+.subtabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px; color: var(--muted); cursor: pointer; white-space: nowrap; font-size: 0.95rem; }
+.subtabs button:hover { color: var(--text); }
+.subtabs button.on { color: var(--text); border-bottom-color: var(--text); }
