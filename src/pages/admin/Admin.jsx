@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useShop } from '../../App.jsx';
 import Login from './Login.jsx';
@@ -60,20 +60,30 @@ export default function Admin() {
   const [tab, setTab] = useState('today');
   const [newCount, setNewCount] = useState(0);
 
+  // Only the newest check is allowed to update the screen, so a slow older
+  // check can't sign you back out.
+  const checkSeq = useRef(0);
   const check = useCallback(async () => {
-    try {
-      const a = await api.auth.getAdmin();
-      setAdmin(a);
-      return !!a;
-    } catch {
-      setAdmin(null);
-      return false;
+    const seq = ++checkSeq.current;
+    let a = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        a = await api.auth.getAdmin();
+        break;
+      } catch {
+        await new Promise((r) => setTimeout(r, 400));
+      }
     }
+    if (seq === checkSeq.current) setAdmin(a);
+    return !!a;
   }, []);
 
   useEffect(() => {
     check();
-    return api.auth.onAuthChange(() => check());
+    return api.auth.onAuthChange((event) => {
+      // Only sign-in / sign-out need a re-check; token refreshes don't.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') check();
+    });
   }, [check]);
 
   const signOut = useCallback(async () => {

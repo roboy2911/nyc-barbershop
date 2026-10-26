@@ -162,7 +162,12 @@ export function makeSupabaseBackend(url, anonKey) {
         let stopped = false;
         client().then((sb) => {
           if (stopped) return;
-          const { data } = sb.auth.onAuthStateChange((event) => cb(event));
+          // Supabase calls this while it's still busy finishing the sign-in.
+          // Running our own Supabase calls straight away would lock up, so
+          // wait until it's done (setTimeout) and don't hand back a promise.
+          const { data } = sb.auth.onAuthStateChange((event) => {
+            setTimeout(() => cb(event), 0);
+          });
           unsub = () => data.subscription.unsubscribe();
         });
         return () => {
