@@ -24,7 +24,7 @@ export function serviceClient(): SupabaseClient {
 
 export async function loadData(db: SupabaseClient) {
   const q = (t: string) => db.from(t).select('*');
-  const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks] = await Promise.all([
+  const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours] = await Promise.all([
     db.from('settings').select('*').eq('id', 1).single(),
     q('services'),
     q('barbers'),
@@ -32,6 +32,7 @@ export async function loadData(db: SupabaseClient) {
     q('special_days'),
     q('barber_unavailability'),
     q('breaks'),
+    q('barber_hours'),
   ]);
   for (const r of [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks]) {
     if (r.error) throw r.error;
@@ -44,6 +45,7 @@ export async function loadData(db: SupabaseClient) {
     specialDays: specialDays.data!,
     unavailability: unavailability.data!,
     breaks: breaks.data!,
+    barberHours: barberHours.error ? [] : barberHours.data!,
   });
 }
 

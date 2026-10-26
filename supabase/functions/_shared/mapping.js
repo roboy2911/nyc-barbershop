@@ -34,6 +34,7 @@ export const fromDb = {
     repeatUntil: r.repeat_until,
     label: r.label,
   }),
+  barberHours: (r) => ({ barberId: r.barber_id, dow: r.dow, off: r.off, startMin: r.start_min, endMin: r.end_min }),
   busy: (r) => ({ barberId: r.barber_id, date: r.booking_date, startMin: r.start_min, endMin: r.end_min }),
   booking: (r) => ({
     id: r.id,
@@ -80,6 +81,7 @@ export const toDb = {
   weeklyHours: (w) => ({ dow: w.dow, closed: w.closed, open_min: w.openMin, close_min: w.closeMin }),
   specialDay: (d) => ({ date: d.date, closed: d.closed, open_min: d.openMin, close_min: d.closeMin, note: d.note || null }),
   unavailability: (u) => ({ barber_id: u.barberId, start_date: u.startDate, end_date: u.endDate || null, reason: u.reason || null }),
+  barberHours: (h) => ({ barber_id: h.barberId, dow: h.dow, off: !!h.off, start_min: h.off ? null : h.startMin, end_min: h.off ? null : h.endMin }),
   break: (b) => ({
     barber_id: b.barberId,
     start_date: b.startDate,
@@ -105,7 +107,7 @@ export const toDb = {
   }),
 };
 
-export function assembleData({ settings, services, barbers, weeklyHours, specialDays, unavailability, breaks }) {
+export function assembleData({ settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours = [] }) {
   return {
     settings: fromDb.settings(settings),
     services: services.map(fromDb.service).sort((a, b) => a.sort - b.sort),
@@ -114,5 +116,6 @@ export function assembleData({ settings, services, barbers, weeklyHours, special
     specialDays: specialDays.map(fromDb.specialDay),
     unavailability: unavailability.map(fromDb.unavailability),
     breaks: breaks.map(fromDb.break),
+    barberHours: barberHours.map(fromDb.barberHours),
   };
 }

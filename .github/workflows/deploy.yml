@@ -40,11 +40,14 @@ jobs:
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
         run: |
           ORIGIN=$(echo "$SITE_URL" | sed -E 's#^(https?://[^/]+).*#\1#')
-          supabase secrets set --project-ref "$PROJECT_REF" SITE_URL="$SITE_URL" ALLOWED_ORIGIN="$ORIGIN"
+          # Shared secret for the hourly job, derived from the access token (never stored in the repo).
+          CRON_SECRET=$(printf '%s' "$SUPABASE_ACCESS_TOKEN:nyc-cron" | sha256sum | cut -c1-48)
+          echo "::add-mask::$CRON_SECRET"
+          supabase secrets set --project-ref "$PROJECT_REF" SITE_URL="$SITE_URL" ALLOWED_ORIGIN="$ORIGIN" CRON_SECRET="$CRON_SECRET"
       - name: Deploy functions
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
         run: |
-          for f in create-booking cancel-booking admin-action; do
+          for f in create-booking cancel-booking admin-action hourly-jobs; do
             supabase functions deploy "$f" --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
           done
 

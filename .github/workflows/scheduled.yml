@@ -1,0 +1,35 @@
+# Every hour: send appointment reminders and keep the Supabase project awake.
+name: Hourly jobs
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write # lets the keep-alive step stop GitHub switching this schedule off
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Run hourly job
+        if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
+        run: |
+          CRON_SECRET=$(printf '%s' "$SUPABASE_ACCESS_TOKEN:nyc-cron" | sha256sum | cut -c1-48)
+          echo "::add-mask::$CRON_SECRET"
+          for i in 1 2 3; do
+            code=$(curl -s -o out.json -w '%{http_code}' -X POST \
+              -H "x-cron-secret: $CRON_SECRET" -H 'Content-Type: application/json' -d '{}' \
+              "https://$PROJECT_REF.supabase.co/functions/v1/hourly-jobs")
+            cat out.json; echo
+            [ "$code" = "200" ] && exit 0
+            sleep 20
+          done
+          echo "Hourly job failed (HTTP $code)"; exit 1
+      # GitHub pauses scheduled workflows after 60 days without commits; this prevents that.
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2

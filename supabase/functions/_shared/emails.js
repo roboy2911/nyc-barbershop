@@ -92,3 +92,14 @@ export function bookingChangedEmail({ to, name, before, after, oldBarberName, ne
     text: `Hi ${name}, your appointment has changed. Was: ${apptLine(before, oldBarberName)}. Now: ${apptLine(after, newBarberName)}. Cancel: ${siteUrl}/cancel?token=${after.cancelToken}`,
   };
 }
+
+export function reminderEmail({ to, name, booking, barberName, siteUrl }) {
+  return {
+    to,
+    subject: `Reminder: your NYC Barbershop booking tomorrow at ${minToLabel(booking.startMin)}`,
+    html: layout('See you tomorrow', `<p>Hi ${esc(name)}, just a reminder about your appointment:</p>
+<p><strong>${esc(apptLine(booking, barberName))}</strong></p>
+<p>Can't make it? Please <a href="${esc(siteUrl)}/cancel?token=${esc(booking.cancelToken)}" style="color:#ddd">cancel here</a> so someone else can take the spot, or call us on ${esc(SHOP.phone)}.</p>`),
+    text: `Hi ${name}, reminder: ${apptLine(booking, barberName)}. Can't make it? Cancel: ${siteUrl}/cancel?token=${booking.cancelToken} or call ${SHOP.phone}.`,
+  };
+}

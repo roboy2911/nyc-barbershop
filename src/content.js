@@ -7,11 +7,18 @@ export const SHOP = {
   facebook: 'https://www.facebook.com/people/NYC-Barbershop/61551744285862/',
   instagram: 'https://www.instagram.com/nycbarbershop.gc/',
   instagramHandle: '@nycbarbershop.gc',
+  lat: -27.852664,
+  lng: 153.3360056,
+  // The shop's Google Maps listing.
+  googleMaps: 'https://www.google.com/maps?cid=12498344011653964478',
+  // Where the "Review us on Google" button goes. For a link that opens the
+  // review box directly: Google Business Profile -> "Ask for reviews" -> copy link, paste here.
+  googleReview: 'https://www.google.com/maps?cid=12498344011653964478',
 };
 
 export const telHref = (phone) => `tel:+61${String(phone || '').replace(/\D/g, '').replace(/^0/, '')}`;
-export const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(SHOP.mapQuery)}`;
-export const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(SHOP.mapQuery)}&z=16&output=embed`;
+export const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${SHOP.lat},${SHOP.lng}&travelmode=driving`;
+export const mapEmbedUrl = `https://maps.google.com/maps?q=${SHOP.lat},${SHOP.lng}&z=17&output=embed`;
 
 // DRAFT – for the shop owner to edit.
 export const ABOUT = {

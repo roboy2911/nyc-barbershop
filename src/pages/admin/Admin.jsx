@@ -5,6 +5,8 @@ import Login from './Login.jsx';
 import TodayTab from './TodayTab.jsx';
 import BookingsTab from './BookingsTab.jsx';
 import CustomersTab from './CustomersTab.jsx';
+import NewBookingsTab, { lastSeen } from './NewBookingsTab.jsx';
+import StatsTab from './StatsTab.jsx';
 import HoursTab from './HoursTab.jsx';
 import BarbersTab from './BarbersTab.jsx';
 import BreaksTab from './BreaksTab.jsx';
@@ -18,8 +20,10 @@ const IDLE_LIMIT_MS = 30 * 60 * 1000; // sign out after 30 minutes of no activit
 
 const TABS = [
   ['today', 'Today', TodayTab],
+  ['new', 'Newest bookings', NewBookingsTab],
   ['bookings', 'Bookings', BookingsTab],
   ['customers', 'Customers', CustomersTab],
+  ['stats', 'Website visitors', StatsTab],
   ['hours', 'Opening hours', HoursTab],
   ['barbers', 'Barbers', BarbersTab],
   ['breaks', 'Breaks', BreaksTab],
@@ -35,6 +39,7 @@ export default function Admin() {
   const [admin, setAdmin] = useState(undefined);
   const [tab, setTab] = useState('today');
   const lastActive = useRef(Date.now());
+  const [newCount, setNewCount] = useState(0);
 
   const check = useCallback(async () => {
     try {
@@ -53,6 +58,19 @@ export default function Admin() {
     await api.auth.signOut();
     setAdmin(null);
   }, []);
+
+  // How many bookings were made since the "Newest bookings" list was last opened.
+  useEffect(() => {
+    if (!admin) return;
+    const count = () =>
+      api.listRecentBookings(50).then((rows) => {
+        const seen = lastSeen();
+        setNewCount(seen ? rows.filter((b) => b.createdAt > seen).length : rows.length);
+      }).catch(() => {});
+    count();
+    const t = setInterval(count, 120000);
+    return () => clearInterval(t);
+  }, [admin]);
 
   // Automatic sign-out when idle.
   useEffect(() => {
@@ -88,12 +106,13 @@ export default function Admin() {
         {TABS.map(([id, label]) => (
           <button key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>
             {label}
+            {id === 'new' && newCount > 0 && <span className="nav-count">{newCount > 49 ? '50+' : newCount}</span>}
           </button>
         ))}
         <button onClick={signOut}>Sign out</button>
       </nav>
       <section className="admin-main">
-        <Current admin={admin} refreshShop={refresh} />
+        <Current admin={admin} refreshShop={refresh} onSeen={() => setNewCount(0)} />
       </section>
     </div>
   );

@@ -46,6 +46,7 @@ function seed() {
     ],
     specialDays: [],
     unavailability: [],
+    barberHours: [],
     breaks: [
       { id: uid(), barberId: tom, startDate: qldNow().date, startMin: 720, endMin: 750, repeat: 'daily', repeatDays: [], repeatUntil: null, label: 'Lunch' },
     ],
@@ -179,6 +180,47 @@ export const demoBackend = {
       return { ...b, barberName: names(s)[b.barberId] };
     });
   },
+  trackView(view) {
+    try {
+      const k = 'nyc-demo-views';
+      const list = JSON.parse(localStorage.getItem(k) || '[]');
+      list.push({ ...view, day: qldNow().date });
+      localStorage.setItem(k, JSON.stringify(list.slice(-5000)));
+    } catch {
+      /* ignore */
+    }
+  },
+  async visitStats(days) {
+    let list = [];
+    try {
+      list = JSON.parse(localStorage.getItem('nyc-demo-views') || '[]');
+    } catch {
+      /* ignore */
+    }
+    const since = addDays(qldNow().date, -days + 1);
+    list = list.filter((v) => v.day >= since);
+    const group = (key, val) => {
+      const m = new Map();
+      list.forEach((v) => {
+        const k = key(v);
+        if (k == null) return;
+        const e = m.get(k) || { set: new Set(), n: 0 };
+        e.n++;
+        e.set.add(v.visitor);
+        m.set(k, e);
+      });
+      return [...m.entries()].map(([k, e]) => val(k, e));
+    };
+    return {
+      daily: group((v) => v.day, (day, e) => ({ day, views: e.n, visitors: e.set.size })).sort((a, b) => a.day.localeCompare(b.day)),
+      pages: group((v) => v.path, (path, e) => ({ path, views: e.n })).sort((a, b) => b.views - a.views).slice(0, 10),
+      referrers: group((v) => v.referrer || null, (referrer, e) => ({ referrer, views: e.n })).sort((a, b) => b.views - a.views).slice(0, 10),
+      devices: group((v) => v.device || 'unknown', (device, e) => ({ device, visitors: e.set.size })),
+      visitors: new Set(list.map((v) => v.visitor)).size,
+      views: list.length,
+      bookings: load().bookings.filter((b) => b.source === 'online' && (b.createdAt || '').slice(0, 10) >= since).length,
+    };
+  },
   async sendContact(msg) {
     await delay();
     mutate((s) => s.messages.unshift({ ...msg, id: uid(), handled: false, createdAt: new Date().toISOString() }));
@@ -239,6 +281,19 @@ export const demoBackend = {
   },
   async listAllBookings(from) {
     return delay(load().bookings.filter((b) => b.date >= from));
+  },
+  async listRecentBookings(limit = 50) {
+    return delay([...load().bookings].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, limit));
+  },
+  async saveBarberHours(barberId, rows) {
+    mutate((s) => {
+      s.data.barberHours = (s.data.barberHours || []).filter((h) => h.barberId !== barberId)
+        .concat(rows.filter((r) => r.off || r.custom).map((r) => ({ barberId, dow: r.dow, off: !!r.off, startMin: r.off ? null : r.startMin, endMin: r.off ? null : r.endMin })));
+    });
+  },
+  async exportAll() {
+    const s = load();
+    return { exported_at: new Date().toISOString(), ...s.data, bookings: s.bookings, contact_messages: s.messages };
   },
   async setNoShow(id, value) {
     mutate((s) => (s.bookings.find((b) => b.id === id).noShow = value));

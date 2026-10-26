@@ -67,8 +67,20 @@ export function isBarberUnavailable(data, barberId, date) {
 export function activeBarbers(data) {
   return data.barbers.filter((b) => !b.removed);
 }
+// A barber's own hours on a date: null if they're off, otherwise
+// { startMin, endMin } (their hours, trimmed to the shop's hours that day).
+export function barberDayHours(data, barberId, date) {
+  const shop = getDayHours(data, date);
+  if (shop.closed) return null;
+  const own = (data.barberHours || []).find((h) => h.barberId === barberId && h.dow === dowOf(date));
+  if (!own) return { startMin: shop.openMin, endMin: shop.closeMin };
+  if (own.off) return null;
+  const startMin = Math.max(shop.openMin, own.startMin ?? shop.openMin);
+  const endMin = Math.min(shop.closeMin, own.endMin ?? shop.closeMin);
+  return endMin > startMin ? { startMin, endMin } : null;
+}
 export function workingBarbers(data, date) {
-  return activeBarbers(data).filter((b) => !isBarberUnavailable(data, b.id, date));
+  return activeBarbers(data).filter((b) => !isBarberUnavailable(data, b.id, date) && barberDayHours(data, b.id, date));
 }
 
 // ---------- breaks ----------
@@ -104,6 +116,8 @@ function maxOverlap(intervals, s, e) {
 }
 
 export function barberFreeAt(data, busy, barberId, date, s, e) {
+  const hrs = barberDayHours(data, barberId, date);
+  if (!hrs || s < hrs.startMin || e > hrs.endMin) return false;
   return (
     !busy.some((x) => x.date === date && x.barberId === barberId && overlaps(x.startMin, x.endMin, s, e)) &&
     !breaksFor(data, barberId, date).some((br) => overlaps(br.startMin, br.endMin, s, e))
@@ -135,6 +149,12 @@ export function getSlots(data, busy, { date, duration, barberId, now = qldNow() 
   for (let s = hours.openMin; s + duration <= hours.closeMin; s += step) {
     const e = s + duration;
     if (date === now.date && s < now.minutes + cutoff) continue;
+    // Skip times outside every candidate barber's own hours (not "booked", just not working).
+    const inHours = candidates.some((b) => {
+      const h = barberDayHours(data, b.id, date);
+      return h && s >= h.startMin && e <= h.endMin;
+    });
+    if (!inHours) continue;
     const shopFull = maxOverlap(dayBusy, s, e) >= cap;
     const free = shopFull ? [] : candidates.filter((b) => barberFreeAt(data, dayBusy, b.id, date, s, e));
     slots.push({ startMin: s, endMin: e, available: free.length > 0, freeBarbers: free.map((b) => b.id) });

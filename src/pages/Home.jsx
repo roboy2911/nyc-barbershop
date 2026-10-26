@@ -143,7 +143,10 @@ export default function Home() {
             ))}
           </div>
           <div className="center" style={{ marginTop: 20 }}>
-            <Link to="/reviews" className="btn ghost">All reviews</Link>
+            <div className="review-cta">
+              <Link to="/reviews" className="btn ghost">All reviews</Link>
+              <a className="btn ghost" href={SHOP.googleReview} target="_blank" rel="noreferrer">★ Review us on Google</a>
+            </div>
           </div>
         </div>
       </section>

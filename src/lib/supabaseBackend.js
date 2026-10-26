@@ -62,7 +62,7 @@ export function makeSupabaseBackend(url, anonKey) {
     mode: 'live',
 
     async loadData() {
-      const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks] = await Promise.all([
+      const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours] = await Promise.all([
         table('settings', 'select=*&id=eq.1'),
         table('services'),
         table('barbers'),
@@ -70,9 +70,10 @@ export function makeSupabaseBackend(url, anonKey) {
         table('special_days'),
         table('barber_unavailability'),
         table('breaks'),
+        table('barber_hours').catch(() => []),
       ]);
       if (!settings?.[0]) throw new Error('Shop settings are missing – has the database been set up?');
-      return assembleData({ settings: settings[0], services, barbers, weeklyHours, specialDays, unavailability, breaks });
+      return assembleData({ settings: settings[0], services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours });
     },
     async getBusy(from, to) {
       return (await request('/rest/v1/rpc/get_busy', { method: 'POST', body: { from_date: from, to_date: to } })).map(fromDb.busy);
@@ -85,6 +86,12 @@ export function makeSupabaseBackend(url, anonKey) {
     },
     async cancelByToken(token) {
       return (await fn('cancel-booking', { token, action: 'cancel' })).booking;
+    },
+    trackView(view) {
+      request('/rest/v1/rpc/track_view', {
+        method: 'POST',
+        body: { p_path: view.path, p_referrer: view.referrer, p_visitor: view.visitor, p_device: view.device },
+      }).catch(() => {});
     },
     async sendContact(msg) {
       await request('/rest/v1/contact_messages', {
@@ -184,6 +191,35 @@ export function makeSupabaseBackend(url, anonKey) {
         const rows = must(await (await client()).from('bookings').select('*').gte('booking_date', from).order('booking_date').range(page * 1000, page * 1000 + 999));
         out.push(...rows.map(fromDb.booking));
         if (rows.length < 1000) break;
+      }
+      return out;
+    },
+    async listRecentBookings(limit = 50) {
+      const rows = must(await (await client()).from('bookings').select('*').order('created_at', { ascending: false }).limit(limit));
+      return rows.map(fromDb.booking);
+    },
+    async visitStats(days) {
+      return must(await (await client()).rpc('visit_stats', { p_days: days }));
+    },
+    async saveBarberHours(barberId, rows) {
+      const sb = await client();
+      must(await sb.from('barber_hours').delete().eq('barber_id', barberId));
+      const custom = rows.filter((r) => r.off || r.custom).map((r) => toDb.barberHours({ ...r, barberId }));
+      if (custom.length) must(await sb.from('barber_hours').insert(custom));
+    },
+    async exportAll() {
+      const sb = await client();
+      const tables = ['settings', 'services', 'barbers', 'barber_hours', 'weekly_hours', 'special_days', 'barber_unavailability', 'breaks', 'bookings', 'contact_messages'];
+      const out = { exported_at: new Date().toISOString() };
+      for (const t of tables) {
+        const rows = [];
+        for (let page = 0; page < 50; page++) {
+          const { data, error } = await sb.from(t).select('*').range(page * 1000, page * 1000 + 999);
+          if (error) throw new Error(error.message);
+          rows.push(...data);
+          if (data.length < 1000) break;
+        }
+        out[t] = rows;
       }
       return out;
     },

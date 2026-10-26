@@ -59,6 +59,19 @@ GitHub repo **Settings → Pages → Custom domain** → `nycbarbershop.com.au`,
 
 ---
 
+## Automatic jobs (GitHub Actions)
+
+- **Hourly jobs** – sends reminder emails about 24 hours before each appointment (once emails are set up) and keeps the free Supabase project from pausing.
+- **Weekly backup** – every Monday at 3:23 am it saves a password-protected copy of all data. Turn it on by adding a secret named `BACKUP_PASSWORD` (repo **Settings → Secrets and variables → Actions → Secrets**). Pick a long password and store it somewhere safe – without it the backups can't be opened.
+  - Download: repo **Actions → Weekly backup →** pick a run **→ Artifacts**. Backups are kept for 90 days.
+  - Open one (Mac/Linux terminal, or Git Bash on Windows):
+    ```bash
+    unzip nyc-barbershop-backup-*.zip
+    openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in nyc-barbershop-backup-*.tgz.enc -out backup.tgz
+    tar xzf backup.tgz   # gives one .json file per table
+    ```
+- An admin can also download an (unencrypted) backup any time from **Admin → Settings → Download backup now**.
+
 ## How the admin page is protected
 
 - Login is handled by Supabase: passwords are stored hashed, never in the website code.

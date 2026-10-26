@@ -11,6 +11,7 @@ import Contact from './pages/Contact.jsx';
 import Cancel from './pages/Cancel.jsx';
 import MobileBar from './components/MobileBar.jsx';
 import { PAGES } from './lib/seo.js';
+import { trackView } from './lib/track.js';
 
 // The admin area is loaded only when someone opens it, so the public site stays fast.
 const Admin = lazy(() => import('./pages/admin/Admin.jsx'));
@@ -76,6 +77,7 @@ function PageMeta() {
     const meta = PAGES[pathname] || PAGES['/'];
     document.title = meta.title;
     document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
+    trackView(pathname);
   }, [pathname]);
   return null;
 }

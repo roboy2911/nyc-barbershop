@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { REVIEWS } from '../content.js';
+import { REVIEWS, SHOP } from '../content.js';
 
 export default function Reviews() {
   return (
@@ -20,8 +20,16 @@ export default function Reviews() {
             </div>
           ))}
         </div>
-        <div className="center" style={{ marginTop: 36 }}>
-          <Link className="btn" to="/book">Book your cut</Link>
+        <div className="card center" style={{ marginTop: 36 }}>
+          <h3>Been in for a cut?</h3>
+          <p className="muted">We'd really appreciate a quick review – it helps other locals find us.</p>
+          <div className="review-cta">
+            <a className="btn" href={SHOP.googleReview} target="_blank" rel="noreferrer">★ Review us on Google</a>
+            <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">See us on Google Maps</a>
+          </div>
+        </div>
+        <div className="center" style={{ marginTop: 24 }}>
+          <Link className="btn ghost" to="/book">Book your cut</Link>
         </div>
       </div>
     </>

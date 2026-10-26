@@ -7,6 +7,20 @@ export default function SettingsTab({ refreshShop }) {
   const [s, setS] = useState({ ...data.settings, maxConcurrent: data.settings.maxConcurrent ?? '' });
   const [msg, setMsg] = useState({ ok: '', err: '' });
 
+  async function backup() {
+    try {
+      const all = await api.exportAll();
+      const url = URL.createObjectURL(new Blob([JSON.stringify(all, null, 1)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nyc-barbershop-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      setMsg({ ok: '', err: `Backup failed: ${err.message}` });
+    }
+  }
+
   async function save(e) {
     e.preventDefault();
     try {
@@ -73,6 +87,15 @@ export default function SettingsTab({ refreshShop }) {
         </div>
         <button className="btn">Save settings</button>
       </form>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <h3>Backup</h3>
+        <p className="muted small">
+          A password-protected backup of everything (bookings, customers, hours, settings) is made automatically every week.
+          You can also download one now – keep it somewhere private, it contains customer details.
+        </p>
+        <button className="btn ghost" onClick={backup}>Download backup now</button>
+      </div>
     </div>
   );
 }

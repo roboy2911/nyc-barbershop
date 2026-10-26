@@ -1,0 +1,46 @@
+# Every week: download all the shop's data from Supabase and save it as a
+# password-protected file under this workflow run (Actions -> Weekly backup -> Artifacts).
+# Needs the BACKUP_PASSWORD secret. Restore help: see SETUP.md.
+name: Weekly backup
+
+on:
+  schedule:
+    - cron: '23 17 * * 0' # Monday 3:23 am Queensland time
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      BACKUP_PASSWORD: ${{ secrets.BACKUP_PASSWORD }}
+    steps:
+      - name: Check settings
+        run: |
+          if [ -z "$BACKUP_PASSWORD" ]; then
+            echo "::error::Add a BACKUP_PASSWORD secret (repo Settings -> Secrets and variables -> Actions) to turn on weekly backups."
+            exit 1
+          fi
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$PROJECT_REF" ] || { echo "::error::Supabase is not connected"; exit 1; }
+      - name: Export data
+        run: |
+          set -e
+          mkdir backup
+          for t in settings services barbers barber_hours weekly_hours special_days barber_unavailability breaks bookings contact_messages admins; do
+            curl -sf -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+              -d "{\"query\": \"select coalesce(json_agg(t), '[]'::json) as rows from public.$t t\"}" \
+              -o "backup/$t.json"
+            echo "$t: $(wc -c < backup/$t.json) bytes"
+          done
+          STAMP=$(date -u +%Y-%m-%d)
+          tar czf data.tgz backup
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in data.tgz -out "nyc-barbershop-backup-$STAMP.tgz.enc" -pass env:BACKUP_PASSWORD
+          rm -rf backup data.tgz
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nyc-barbershop-backup-${{ env.STAMP }}
+          path: nyc-barbershop-backup-*.tgz.enc
+          retention-days: 90
