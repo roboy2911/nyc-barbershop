@@ -29,6 +29,13 @@ jobs:
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
         with:
           version: latest
+      - uses: actions/setup-node@v4
+        if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
+        with:
+          node-version: 22
+      - name: Update database
+        if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
+        run: node scripts/migrate.mjs
       - name: Set function settings
         if: env.SUPABASE_ACCESS_TOKEN != '' && env.PROJECT_REF != ''
         run: |
@@ -43,6 +50,7 @@ jobs:
 
   site:
     name: Website
+    needs: functions
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
