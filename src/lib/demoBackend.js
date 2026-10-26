@@ -13,6 +13,23 @@ import {
   barberChangedEmail,
   bookingChangedEmail,
 } from '../../supabase/functions/_shared/emails.js';
+import { blobToDataUrl, resizeImage } from './images.js';
+
+const GALLERY_KEY = 'nyc-demo-gallery';
+const readGallery = () => {
+  try {
+    return JSON.parse(localStorage.getItem(GALLERY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+};
+const writeGallery = (list) => {
+  try {
+    localStorage.setItem(GALLERY_KEY, JSON.stringify(list));
+  } catch {
+    throw new Error('Demo storage is full – remove a photo first.');
+  }
+};
 
 const KEY = 'nyc-barbershop-demo-v1';
 const DEMO_PASSWORD_KEY = 'nyc-barbershop-demo-pw';
@@ -23,7 +40,7 @@ function seed() {
   const tom = uid();
   const john = uid();
   const services = [
-    { id: uid(), name: 'Haircut', duration: 35, priceCents: 3500, description: 'Placeholder description – classic cut, fade or scissor work, finished and styled.', sort: 1, active: true },
+    { id: uid(), name: 'Haircut', duration: 35, priceCents: 3500, popular: true, description: 'Placeholder description – classic cut, fade or scissor work, finished and styled.', sort: 1, active: true },
     { id: uid(), name: 'Beard', duration: 25, priceCents: 2500, description: 'Placeholder description – beard shape, line and trim.', sort: 2, active: true },
     { id: uid(), name: 'Haircut & Beard', duration: 45, priceCents: 5500, description: 'Placeholder description – the full works.', sort: 3, active: true },
     { id: uid(), name: 'Line Up', duration: 15, priceCents: 1500, description: 'Placeholder description – sharp edges between cuts.', sort: 4, active: true },
@@ -179,6 +196,20 @@ export const demoBackend = {
       }
       return { ...b, barberName: names(s)[b.barberId] };
     });
+  },
+  async listGallery() {
+    return readGallery().sort((a, b) => a.sort - b.sort);
+  },
+  async uploadPhoto(file, caption, sort) {
+    // Demo keeps small copies only, in this browser.
+    const url = await blobToDataUrl(await resizeImage(file, 900, 0.75));
+    writeGallery([...readGallery(), { id: uid(), caption, sort, url, thumbUrl: url }]);
+  },
+  async updatePhoto(id, patch) {
+    writeGallery(readGallery().map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  },
+  async deletePhoto(photo) {
+    writeGallery(readGallery().filter((p) => p.id !== photo.id));
   },
   trackView(view) {
     try {

@@ -331,7 +331,10 @@ export default function Book() {
             {step === 2 && service && (
               <>
                 {!busy ? (
-                  <p className="muted">Loading available times…</p>
+                  <div aria-busy="true" aria-label="Loading available times">
+                    <div className="quick">{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ flex: '1 1 140px', height: 58 }} />)}</div>
+                    <div className="skeleton" style={{ maxWidth: 520, height: 340 }} />
+                  </div>
                 ) : (
                   <>
                     {soonest.length > 0 && (

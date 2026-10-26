@@ -5,6 +5,7 @@
 // library is only downloaded when someone opens the admin page.
 import { assembleData, fromDb, toDb } from '../../supabase/functions/_shared/mapping.js';
 import { addDays, qldNow } from '../../supabase/functions/_shared/availability.js';
+import { resizeImage } from './images.js';
 
 export function makeSupabaseBackend(url, anonKey) {
   const keyHeaders = { apikey: anonKey, Authorization: `Bearer ${anonKey}` };
@@ -86,6 +87,11 @@ export function makeSupabaseBackend(url, anonKey) {
     },
     async cancelByToken(token) {
       return (await fn('cancel-booking', { token, action: 'cancel' })).booking;
+    },
+    async listGallery() {
+      const rows = await table('gallery_photos', 'select=*&order=sort.asc,created_at.desc').catch(() => []);
+      const pub = (p) => `${url}/storage/v1/object/public/gallery/${p}`;
+      return rows.map((r) => ({ id: r.id, caption: r.caption, sort: r.sort, path: r.path, thumbPath: r.thumb_path, url: pub(r.path), thumbUrl: pub(r.thumb_path) }));
     },
     trackView(view) {
       request('/rest/v1/rpc/track_view', {
@@ -209,7 +215,7 @@ export function makeSupabaseBackend(url, anonKey) {
     },
     async exportAll() {
       const sb = await client();
-      const tables = ['settings', 'services', 'barbers', 'barber_hours', 'weekly_hours', 'special_days', 'barber_unavailability', 'breaks', 'bookings', 'contact_messages'];
+      const tables = ['settings', 'services', 'barbers', 'barber_hours', 'weekly_hours', 'special_days', 'barber_unavailability', 'breaks', 'bookings', 'contact_messages', 'gallery_photos'];
       const out = { exported_at: new Date().toISOString() };
       for (const t of tables) {
         const rows = [];
@@ -222,6 +228,25 @@ export function makeSupabaseBackend(url, anonKey) {
         out[t] = rows;
       }
       return out;
+    },
+    async uploadPhoto(file, caption, sort) {
+      const sb = await client();
+      const [full, thumb] = await Promise.all([resizeImage(file, 1600), resizeImage(file, 600, 0.8)]);
+      const id = crypto.randomUUID();
+      const opts = { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false };
+      const up1 = await sb.storage.from('gallery').upload(`${id}.jpg`, full, opts);
+      if (up1.error) throw new Error(up1.error.message);
+      const up2 = await sb.storage.from('gallery').upload(`${id}-thumb.jpg`, thumb, opts);
+      if (up2.error) throw new Error(up2.error.message);
+      must(await sb.from('gallery_photos').insert({ path: `${id}.jpg`, thumb_path: `${id}-thumb.jpg`, caption: caption || null, sort }));
+    },
+    async updatePhoto(id, patch) {
+      must(await (await client()).from('gallery_photos').update(patch).eq('id', id));
+    },
+    async deletePhoto(photo) {
+      const sb = await client();
+      await sb.storage.from('gallery').remove([photo.path, photo.thumbPath]);
+      must(await sb.from('gallery_photos').delete().eq('id', photo.id));
     },
     async setNoShow(id, value) {
       must(await (await client()).from('bookings').update({ no_show: value, updated_at: new Date().toISOString() }).eq('id', id));

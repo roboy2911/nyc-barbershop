@@ -20,7 +20,7 @@ export default function ServicesTab({ refreshShop }) {
     try {
       await api.saveService({
         id: edit.id, name: edit.name.trim(), duration, description: edit.description,
-        priceCents: edit.price === '' ? null : Math.round(Number(edit.price) * 100), active: edit.active, sort: edit.sort,
+        priceCents: edit.price === '' ? null : Math.round(Number(edit.price) * 100), active: edit.active, sort: edit.sort, popular: !!edit.popular,
       });
       await refreshShop();
       setEdit(null);
@@ -40,7 +40,7 @@ export default function ServicesTab({ refreshShop }) {
           <tbody>
             {data.services.map((s) => (
               <tr key={s.id}>
-                <td>{s.name}</td>
+                <td>{s.name}{s.popular && <span className="tag">Most popular</span>}</td>
                 <td>{s.duration} min</td>
                 <td>{s.priceCents == null ? '—' : `$${(s.priceCents / 100).toFixed(2)}`}</td>
                 <td>{s.active ? 'Yes' : 'Hidden'}</td>
@@ -65,6 +65,9 @@ export default function ServicesTab({ refreshShop }) {
             <div className="field"><label>Description</label><textarea maxLength={300} value={edit.description || ''} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></div>
             <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <input type="checkbox" checked={edit.active} onChange={(e) => setEdit({ ...edit, active: e.target.checked })} /> Show on website and allow bookings
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+              <input type="checkbox" checked={!!edit.popular} onChange={(e) => setEdit({ ...edit, popular: e.target.checked })} /> Show a “Most popular” tag
             </label>
             <div className="btn-row" style={{ marginTop: 16 }}>
               <button className="btn">Save</button>

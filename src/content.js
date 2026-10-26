@@ -14,6 +14,10 @@ export const SHOP = {
   // Where the "Review us on Google" button goes. For a link that opens the
   // review box directly: Google Business Profile -> "Ask for reviews" -> copy link, paste here.
   googleReview: 'https://www.google.com/maps?cid=12498344011653964478',
+  // Fill these in from the Google listing to show "4.9 ★ from 120 Google reviews".
+  // Leave as null to just show "Find us on Google".
+  googleRating: null,
+  googleReviewCount: null,
 };
 
 export const telHref = (phone) => `tel:+61${String(phone || '').replace(/\D/g, '').replace(/^0/, '')}`;

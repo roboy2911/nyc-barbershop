@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useShop } from '../App.jsx';
 import { api } from '../lib/api.js';
-import { SHOP, telHref } from '../content.js';
+import { SHOP, telHref, directionsUrl } from '../content.js';
+import Icon from '../components/Icon.jsx';
 
 export default function Contact() {
   const { data } = useShop();
@@ -70,14 +71,15 @@ export default function Contact() {
           </div>
           <div>
             <h3>Prefer to call?</h3>
-            <p><a className="phone-link" href={telHref(data.settings.phone)}>{data.settings.phone}</a></p>
+            <p className="foot-line"><Icon name="phone" /><a className="phone-link" href={telHref(data.settings.phone)}>{data.settings.phone}</a></p>
             {data.settings.publicEmail && (
-              <p><a href={`mailto:${data.settings.publicEmail}`}>{data.settings.publicEmail}</a></p>
+              <p className="foot-line"><Icon name="mail" /><a href={`mailto:${data.settings.publicEmail}`}>{data.settings.publicEmail}</a></p>
             )}
             <h3 style={{ marginTop: 24 }}>Visit us</h3>
             {SHOP.addressLines.map((l) => (
               <div key={l}>{l}</div>
             ))}
+            <a className="btn ghost sm" style={{ marginTop: 12 }} href={directionsUrl} target="_blank" rel="noreferrer"><Icon name="pin" size={14} /> Get directions</a>
           </div>
         </div>
       </div>

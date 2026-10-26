@@ -27,7 +27,7 @@ jobs:
         run: |
           set -e
           mkdir backup
-          for t in settings services barbers barber_hours weekly_hours special_days barber_unavailability breaks bookings contact_messages admins; do
+          for t in settings services barbers barber_hours weekly_hours special_days barber_unavailability breaks bookings contact_messages gallery_photos admins; do
             curl -sf -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
               -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
               -d "{\"query\": \"select coalesce(json_agg(t), '[]'::json) as rows from public.$t t\"}" \

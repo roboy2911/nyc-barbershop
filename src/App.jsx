@@ -70,6 +70,19 @@ function SpecialBanner({ data }) {
   return out;
 }
 
+function PageSkeleton() {
+  return (
+    <div className="container page" aria-busy="true" aria-label="Loading">
+      <div className="skeleton" style={{ height: 44, width: '45%', margin: '20px auto 28px' }} />
+      <div className="skeleton" style={{ height: 16, width: '70%', margin: '0 auto 12px' }} />
+      <div className="skeleton" style={{ height: 16, width: '55%', margin: '0 auto 36px' }} />
+      <div className="svc-mini">
+        {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}
+      </div>
+    </div>
+  );
+}
+
 // Page title + description for the browser tab and link previews.
 function PageMeta() {
   const { pathname } = useLocation();
@@ -142,8 +155,9 @@ export default function App() {
       {error && <div className="container" style={{ paddingTop: 24 }}><div className="error">{error}</div></div>}
       <main>
         <ErrorBoundary key={pathname}>
-        <Suspense fallback={<div className="container page center muted">Loading…</div>}>
+        <Suspense fallback={<PageSkeleton />}>
         {data ? (
+          <div className="page-fade" key={pathname}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/services" element={<Services />} />
@@ -155,8 +169,9 @@ export default function App() {
             <Route path="/admin/reset" element={<ResetPassword />} />
             <Route path="*" element={<div className="container page center"><h1>Page not found</h1></div>} />
           </Routes>
+          </div>
         ) : (
-          !error && <div className="container page center muted">Loading…</div>
+          !error && <PageSkeleton />
         )}
         </Suspense>
         </ErrorBoundary>

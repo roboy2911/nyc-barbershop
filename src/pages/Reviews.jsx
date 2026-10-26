@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { REVIEWS, SHOP } from '../content.js';
+import GoogleBadge from '../components/GoogleBadge.jsx';
+import Icon from '../components/Icon.jsx';
 
 export default function Reviews() {
   return (
@@ -11,6 +13,7 @@ export default function Reviews() {
         </div>
       </div>
       <div className="container page">
+        <div className="center" style={{ marginBottom: 24 }}><GoogleBadge /></div>
         <div className="reviews">
           {REVIEWS.map((r, i) => (
             <div className="review" key={i}>
@@ -24,7 +27,7 @@ export default function Reviews() {
           <h3>Been in for a cut?</h3>
           <p className="muted">We'd really appreciate a quick review – it helps other locals find us.</p>
           <div className="review-cta">
-            <a className="btn" href={SHOP.googleReview} target="_blank" rel="noreferrer">★ Review us on Google</a>
+            <a className="btn" href={SHOP.googleReview} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
             <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">See us on Google Maps</a>
           </div>
         </div>

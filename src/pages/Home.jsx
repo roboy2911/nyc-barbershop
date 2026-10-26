@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useShop } from '../App.jsx';
 import HoursDropdown from '../components/HoursDropdown.jsx';
-import { ABOUT, GALLERY_COUNT, REVIEWS, SHOP, directionsUrl, mapEmbedUrl, telHref } from '../content.js';
+import Gallery from '../components/Gallery.jsx';
+import Icon, { serviceIcon } from '../components/Icon.jsx';
+import GoogleBadge from '../components/GoogleBadge.jsx';
+import ReviewStrip from '../components/ReviewStrip.jsx';
+import { ABOUT, SHOP, directionsUrl, mapEmbedUrl, telHref } from '../content.js';
 import { money } from './Services.jsx';
 import { getDayHours, minToLabel, qldNow } from '../../supabase/functions/_shared/availability.js';
 
@@ -52,7 +56,7 @@ export default function Home() {
         </div>
         <div className="btn-row" style={{ justifyContent: 'center' }}>
           <Link to="/book" className="btn">Book Now</Link>
-          <a href={telHref(phone)} className="btn ghost">Call {phone}</a>
+          <a href={telHref(phone)} className="btn ghost"><Icon name="phone" size={16} /> {phone}</a>
         </div>
         <a href="#about" className="scroll-cue">
           Scroll<span>⌄</span>
@@ -61,10 +65,10 @@ export default function Home() {
       <div className="stripe" aria-hidden="true" />
 
       <div className="highlights">
-        <div><strong>Est. 2023</strong><span>Coomera locals</span></div>
-        <div><strong>{openDays} days</strong><span>{openDays === 7 ? 'Open every day' : 'Open a week'}</span></div>
-        <div><strong>Walk-ins</strong><span>Always welcome</span></div>
-        <div><strong>24/7</strong><span>Online booking</span></div>
+        <div><Icon name="star" size={22} /><strong>Est. 2023</strong><span>Coomera locals</span></div>
+        <div><Icon name="clock" size={22} /><strong>{openDays} days</strong><span>{openDays === 7 ? 'Open every day' : 'Open a week'}</span></div>
+        <div><Icon name="walk" size={22} /><strong>Walk-ins</strong><span>Always welcome</span></div>
+        <div><Icon name="calendar" size={22} /><strong>24/7</strong><span>Online booking</span></div>
       </div>
 
       <section className="section" id="about">
@@ -83,7 +87,7 @@ export default function Home() {
             <HoursDropdown />
             <ul className="info-list" style={{ marginTop: 16 }}>
               <li>
-                <span className="ico">☎</span>
+                <span className="ico"><Icon name="phone" /></span>
                 <div>
                   <strong>Phone</strong>
                   <a className="phone-link" href={telHref(phone)}>{phone}</a>
@@ -91,7 +95,7 @@ export default function Home() {
               </li>
               {publicEmail && (
                 <li>
-                  <span className="ico">✉</span>
+                  <span className="ico"><Icon name="mail" /></span>
                   <div>
                     <strong>Email</strong>
                     <a href={`mailto:${publicEmail}`}>{publicEmail}</a>
@@ -99,7 +103,7 @@ export default function Home() {
                 </li>
               )}
               <li>
-                <span className="ico">⌖</span>
+                <span className="ico"><Icon name="pin" /></span>
                 <div>
                   <strong>Address</strong>
                   {SHOP.addressLines.map((l) => (
@@ -117,10 +121,12 @@ export default function Home() {
           <Title sub="Simple pricing. Book online or walk in.">Services</Title>
           <div className="svc-mini reveal">
             {services.map((s) => (
-              <Link key={s.id} to={`/book?service=${s.id}`}>
+              <Link key={s.id} to={`/book?service=${s.id}`} className={s.popular ? 'popular' : ''}>
+                {s.popular && <span className="pop-tag">Most popular</span>}
+                <span className="svc-ico"><Icon name={serviceIcon(s.name)} size={26} /></span>
                 <div className="n">{s.name}</div>
                 <div className="p">{money(s.priceCents)}</div>
-                <div className="m">{s.duration} mins · Book →</div>
+                <div className="m">{s.duration} mins <span className="go">Book <Icon name="arrow" size={14} /></span></div>
               </Link>
             ))}
           </div>
@@ -132,21 +138,14 @@ export default function Home() {
 
       <section className="section" id="reviews">
         <div className="container">
-          <Title sub="★★★★★">What customers say</Title>
-          <div className="reviews reveal">
-            {REVIEWS.slice(0, 3).map((r, i) => (
-              <div className="review" key={i}>
-                <div className="stars" aria-label={`${r.stars} out of 5 stars`}>{'★'.repeat(r.stars)}</div>
-                <p>“{r.text}”</p>
-                <div className="who">— {r.name}</div>
-              </div>
-            ))}
-          </div>
-          <div className="center" style={{ marginTop: 20 }}>
-            <div className="review-cta">
-              <Link to="/reviews" className="btn ghost">All reviews</Link>
-              <a className="btn ghost" href={SHOP.googleReview} target="_blank" rel="noreferrer">★ Review us on Google</a>
-            </div>
+          <Title>What customers say</Title>
+          <div className="center" style={{ marginTop: -18, marginBottom: 26 }}><GoogleBadge /></div>
+        </div>
+        <ReviewStrip />
+        <div className="container center" style={{ marginTop: 26 }}>
+          <div className="review-cta">
+            <Link to="/reviews" className="btn ghost">All reviews</Link>
+            <a className="btn ghost" href={SHOP.googleReview} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
           </div>
         </div>
       </section>
@@ -154,17 +153,10 @@ export default function Home() {
       <section className="section" id="gallery">
         <div className="container">
           <Title sub="A few of our recent cuts.">The work</Title>
-          <div className="gallery reveal">
-            {Array.from({ length: GALLERY_COUNT }, (_, i) => (
-              <div className="ph" key={i}>
-                <span className="big">✂</span>
-                Photo coming soon
-              </div>
-            ))}
-          </div>
+          <div className="reveal"><Gallery limit={6} /></div>
           <div className="socials" style={{ marginTop: 24 }}>
-            <a className="btn ghost" href={SHOP.instagram} target="_blank" rel="noreferrer">More on Instagram</a>
-            <a className="btn ghost" href={SHOP.facebook} target="_blank" rel="noreferrer">Facebook</a>
+            <a className="btn ghost" href={SHOP.instagram} target="_blank" rel="noreferrer"><Icon name="instagram" size={16} /> More on Instagram</a>
+            <a className="btn ghost" href={SHOP.facebook} target="_blank" rel="noreferrer"><Icon name="facebook" size={16} /> Facebook</a>
           </div>
         </div>
       </section>
@@ -176,7 +168,8 @@ export default function Home() {
             <iframe title="Map showing NYC Barbershop" src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
           </div>
           <div className="btn-row" style={{ justifyContent: 'center', marginTop: 18 }}>
-            <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">Get directions</a>
+            <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer"><Icon name="pin" size={16} /> Get directions</a>
+            <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">Open in Google Maps</a>
           </div>
         </div>
       </section>
