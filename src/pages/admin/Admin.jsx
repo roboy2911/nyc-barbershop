@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useShop } from '../../App.jsx';
 import Login from './Login.jsx';
+import TodayTab from './TodayTab.jsx';
 import BookingsTab from './BookingsTab.jsx';
+import CustomersTab from './CustomersTab.jsx';
 import HoursTab from './HoursTab.jsx';
 import BarbersTab from './BarbersTab.jsx';
 import BreaksTab from './BreaksTab.jsx';
@@ -15,7 +17,9 @@ import OutboxTab from './OutboxTab.jsx';
 const IDLE_LIMIT_MS = 30 * 60 * 1000; // sign out after 30 minutes of no activity
 
 const TABS = [
+  ['today', 'Today', TodayTab],
   ['bookings', 'Bookings', BookingsTab],
+  ['customers', 'Customers', CustomersTab],
   ['hours', 'Opening hours', HoursTab],
   ['barbers', 'Barbers', BarbersTab],
   ['breaks', 'Breaks', BreaksTab],
@@ -29,7 +33,7 @@ if (api.mode === 'demo') TABS.push(['outbox', 'Email outbox (demo)', OutboxTab])
 export default function Admin() {
   const { refresh } = useShop();
   const [admin, setAdmin] = useState(undefined);
-  const [tab, setTab] = useState('bookings');
+  const [tab, setTab] = useState('today');
   const lastActive = useRef(Date.now());
 
   const check = useCallback(async () => {

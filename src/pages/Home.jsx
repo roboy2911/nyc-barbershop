@@ -1,7 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useShop } from '../App.jsx';
 import HoursDropdown from '../components/HoursDropdown.jsx';
-import { ABOUT, GALLERY_COUNT, SHOP, directionsUrl, mapEmbedUrl, telHref } from '../content.js';
+import { ABOUT, GALLERY_COUNT, REVIEWS, SHOP, directionsUrl, mapEmbedUrl, telHref } from '../content.js';
+import { money } from './Services.jsx';
+import { getDayHours, minToLabel, qldNow } from '../../supabase/functions/_shared/availability.js';
+
+const BASE = import.meta.env.BASE_URL;
 
 function Title({ children, sub }) {
   return (
@@ -13,14 +17,39 @@ function Title({ children, sub }) {
   );
 }
 
+function OpenBadge({ data }) {
+  const now = qldNow();
+  const h = getDayHours(data, now.date);
+  const open = !h.closed && now.minutes >= h.openMin && now.minutes < h.closeMin;
+  return (
+    <span className="badge">
+      <span className={`dot ${open ? 'on' : 'off'}`} />
+      {open ? `Open now · until ${minToLabel(h.closeMin)}` : 'Closed now'}
+    </span>
+  );
+}
+
 export default function Home() {
   const { data } = useShop();
   const { phone, publicEmail } = data.settings;
+  const services = data.services.filter((s) => s.active);
+  const thursday = data.weeklyHours.find((w) => w.dow === 4);
+  const openDays = data.weeklyHours.filter((w) => !w.closed).length;
+  const lateThursday = thursday && !thursday.closed && thursday.closeMin >= 1140;
+
   return (
     <>
       <section className="hero">
-        <img className="logo" src={`${import.meta.env.BASE_URL}logo-dark.png`} alt="NYC Barbershop – Est. 23" />
-        <p className="tagline">Coomera · Gold Coast · Walk-ins welcome</p>
+        <picture>
+          <source srcSet={`${BASE}logo-dark.webp`} type="image/webp" />
+          <img className="logo" src={`${BASE}logo-dark.png`} width={560} height={560} alt="NYC Barbershop – Est. 23" fetchPriority="high" />
+        </picture>
+        <p className="tagline">Coomera · Gold Coast</p>
+        <div className="hero-badges">
+          <OpenBadge data={data} />
+          <span className="badge">Walk-ins welcome</span>
+          {lateThursday && <span className="badge">Late nights Thursday</span>}
+        </div>
         <div className="btn-row" style={{ justifyContent: 'center' }}>
           <Link to="/book" className="btn">Book Now</Link>
           <a href={telHref(phone)} className="btn ghost">Call {phone}</a>
@@ -29,10 +58,18 @@ export default function Home() {
           Scroll<span>⌄</span>
         </a>
       </section>
+      <div className="stripe" aria-hidden="true" />
+
+      <div className="highlights">
+        <div><strong>Est. 2023</strong><span>Coomera locals</span></div>
+        <div><strong>{openDays} days</strong><span>{openDays === 7 ? 'Open every day' : 'Open a week'}</span></div>
+        <div><strong>Walk-ins</strong><span>Always welcome</span></div>
+        <div><strong>24/7</strong><span>Online booking</span></div>
+      </div>
 
       <section className="section" id="about">
         <div className="container about">
-          <div>
+          <div className="reveal">
             <h2>About the shop</h2>
             <h3 style={{ color: 'var(--text)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--body)', fontWeight: 600 }}>
               {ABOUT.heading}
@@ -40,12 +77,8 @@ export default function Home() {
             {ABOUT.paragraphs.map((p) => (
               <p key={p.slice(0, 20)} className="muted">{p}</p>
             ))}
-            <div className="btn-row" style={{ marginTop: 20 }}>
-              <Link to="/services" className="btn ghost">Services &amp; prices</Link>
-              <Link to="/reviews" className="btn ghost">Reviews</Link>
-            </div>
           </div>
-          <div>
+          <div className="reveal">
             <h3>Opening hours</h3>
             <HoursDropdown />
             <ul className="info-list" style={{ marginTop: 16 }}>
@@ -79,14 +112,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section" id="location">
+      <section className="section" id="services">
         <div className="container">
-          <Title sub="Inside Coomera East Shopping Centre, with plenty of parking.">Find us</Title>
-          <div className="map-wrap">
-            <iframe title="Map showing NYC Barbershop" src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+          <Title sub="Simple pricing. Book online or walk in.">Services</Title>
+          <div className="svc-mini reveal">
+            {services.map((s) => (
+              <Link key={s.id} to={`/book?service=${s.id}`}>
+                <div className="n">{s.name}</div>
+                <div className="p">{money(s.priceCents)}</div>
+                <div className="m">{s.duration} mins · Book →</div>
+              </Link>
+            ))}
           </div>
-          <div className="btn-row" style={{ justifyContent: 'center', marginTop: 18 }}>
-            <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">Get directions</a>
+          <div className="center" style={{ marginTop: 20 }}>
+            <Link to="/services" className="btn ghost">Full services &amp; prices</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="reviews">
+        <div className="container">
+          <Title sub="★★★★★">What customers say</Title>
+          <div className="reviews reveal">
+            {REVIEWS.slice(0, 3).map((r, i) => (
+              <div className="review" key={i}>
+                <div className="stars" aria-label={`${r.stars} out of 5 stars`}>{'★'.repeat(r.stars)}</div>
+                <p>“{r.text}”</p>
+                <div className="who">— {r.name}</div>
+              </div>
+            ))}
+          </div>
+          <div className="center" style={{ marginTop: 20 }}>
+            <Link to="/reviews" className="btn ghost">All reviews</Link>
           </div>
         </div>
       </section>
@@ -94,7 +151,7 @@ export default function Home() {
       <section className="section" id="gallery">
         <div className="container">
           <Title sub="A few of our recent cuts.">The work</Title>
-          <div className="gallery">
+          <div className="gallery reveal">
             {Array.from({ length: GALLERY_COUNT }, (_, i) => (
               <div className="ph" key={i}>
                 <span className="big">✂</span>
@@ -109,8 +166,21 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section center">
+      <section className="section" id="location">
         <div className="container">
+          <Title sub="Inside Coomera East Shopping Centre, with plenty of parking.">Find us</Title>
+          <div className="map-wrap reveal">
+            <iframe title="Map showing NYC Barbershop" src={mapEmbedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+          </div>
+          <div className="btn-row" style={{ justifyContent: 'center', marginTop: 18 }}>
+            <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer">Get directions</a>
+          </div>
+        </div>
+      </section>
+
+      <div className="stripe" aria-hidden="true" />
+      <section className="section center" style={{ borderTop: 0 }}>
+        <div className="container reveal">
           <h2>Ready for a fresh cut?</h2>
           <p className="muted">Book online in under a minute, or just walk in.</p>
           <Link to="/book" className="btn">Book Now</Link>

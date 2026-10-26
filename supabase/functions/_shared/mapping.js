@@ -54,6 +54,7 @@ export const fromDb = {
     cancelledBy: r.cancelled_by,
     notes: r.notes,
     cancelToken: r.cancel_token,
+    noShow: !!r.no_show,
     createdAt: r.created_at,
   }),
 };

@@ -227,6 +227,22 @@ export const demoBackend = {
   async listBookings(from, to) {
     return delay(load().bookings.filter((b) => b.date >= from && b.date <= to));
   },
+  async searchBookings(q) {
+    const t = String(q).toLowerCase().trim();
+    if (t.length < 2) return [];
+    return delay(
+      load().bookings
+        .filter((b) => [b.customerName, b.email, b.phone, b.guestName].some((v) => v && v.toLowerCase().includes(t)))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 100),
+    );
+  },
+  async listAllBookings(from) {
+    return delay(load().bookings.filter((b) => b.date >= from));
+  },
+  async setNoShow(id, value) {
+    mutate((s) => (s.bookings.find((b) => b.id === id).noShow = value));
+  },
   async createAdminBooking(b) {
     await delay();
     return mutate((s) => {

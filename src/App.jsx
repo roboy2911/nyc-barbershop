@@ -1,4 +1,4 @@
-import { Component, createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { Component, Suspense, createContext, lazy, useCallback, useContext, useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { api } from './lib/api.js';
 import Header from './components/Header.jsx';
@@ -9,8 +9,12 @@ import Book from './pages/Book.jsx';
 import Reviews from './pages/Reviews.jsx';
 import Contact from './pages/Contact.jsx';
 import Cancel from './pages/Cancel.jsx';
-import Admin from './pages/admin/Admin.jsx';
-import ResetPassword from './pages/admin/ResetPassword.jsx';
+import MobileBar from './components/MobileBar.jsx';
+import { PAGES } from './lib/seo.js';
+
+// The admin area is loaded only when someone opens it, so the public site stays fast.
+const Admin = lazy(() => import('./pages/admin/Admin.jsx'));
+const ResetPassword = lazy(() => import('./pages/admin/ResetPassword.jsx'));
 import { getDayHours, qldNow, addDays, prettyDate } from '../supabase/functions/_shared/availability.js';
 
 const DataCtx = createContext(null);
@@ -46,21 +50,57 @@ function ScrollToTop() {
 }
 
 function SpecialBanner({ data }) {
-  if (data.settings.banner) return <div className="banner">{data.settings.banner}</div>;
-  // Show the next special day within a week, if it has a note.
+  const out = [];
+  if (data.settings.banner) out.push(<div key="b" className="banner">{data.settings.banner}</div>);
+  // Also show the next special day within a week, if it has a note.
   const today = qldNow().date;
   for (let i = 0; i <= 7; i++) {
     const d = addDays(today, i);
     const h = getDayHours(data, d);
     if (h.special && h.note) {
-      return (
-        <div className="banner">
+      out.push(
+        <div key="s" className="banner">
           {i === 0 ? 'Today' : prettyDate(d, { weekday: 'long', day: 'numeric', month: 'short' })}: {h.note}
-        </div>
+        </div>,
       );
+      break;
     }
   }
+  return out;
+}
+
+// Page title + description for the browser tab and link previews.
+function PageMeta() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const meta = PAGES[pathname] || PAGES['/'];
+    document.title = meta.title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
+  }, [pathname]);
   return null;
+}
+
+// Fade sections in as they scroll into view.
+function useReveal(deps) {
+  useEffect(() => {
+    const els = [...document.querySelectorAll('.reveal:not(.in)')];
+    if (!('IntersectionObserver' in window)) {
+      els.forEach((el) => el.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      }),
+      { rootMargin: '0px 0px -8% 0px' },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 }
 
 export default function App() {
@@ -80,10 +120,16 @@ export default function App() {
 
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith('/admin');
+  const showBar = !!data && !isAdmin && pathname !== '/book' && pathname !== '/cancel';
+  useReveal([pathname, data]);
+  useEffect(() => {
+    document.body.classList.toggle('has-mobile-bar', showBar);
+  }, [showBar]);
 
   return (
     <DataCtx.Provider value={{ data, refresh }}>
       <ScrollToTop />
+      <PageMeta />
       {api.mode === 'demo' && (
         <div className="demo-banner">
           Demo mode – bookings are saved in this browser only and emails are not really sent.
@@ -94,6 +140,7 @@ export default function App() {
       {error && <div className="container" style={{ paddingTop: 24 }}><div className="error">{error}</div></div>}
       <main>
         <ErrorBoundary key={pathname}>
+        <Suspense fallback={<div className="container page center muted">Loading…</div>}>
         {data ? (
           <Routes>
             <Route path="/" element={<Home />} />
@@ -109,9 +156,11 @@ export default function App() {
         ) : (
           !error && <div className="container page center muted">Loading…</div>
         )}
+        </Suspense>
         </ErrorBoundary>
       </main>
       {!isAdmin && data && <Footer />}
+      {showBar && <MobileBar />}
     </DataCtx.Provider>
   );
 }

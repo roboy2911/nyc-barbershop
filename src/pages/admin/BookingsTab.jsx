@@ -4,9 +4,7 @@ import { useShop } from '../../App.jsx';
 import {
   activeBarbers,
   addDays,
-  barberFreeAt,
   breaksFor,
-  dowOf,
   getDayHours,
   isBarberUnavailable,
   minToLabel,
@@ -14,188 +12,7 @@ import {
   qldNow,
 } from '../../../supabase/functions/_shared/availability.js';
 
-const weekStart = (d) => addDays(d, -((dowOf(d) + 6) % 7)); // Monday
-
-function BookingForm({ initial, onSave, onClose, title, isEdit }) {
-  const { data } = useShop();
-  const barbers = activeBarbers(data);
-  const services = data.services.filter((s) => s.active || s.id === initial?.serviceId);
-  const [f, setF] = useState(() => ({
-    customerName: '', phone: '', email: '', notes: '',
-    serviceId: services[0]?.id, barberId: barbers[0]?.id, date: qldNow().date, startMin: null,
-    ...initial,
-  }));
-  const [dayBookings, setDayBookings] = useState([]);
-  const [notify, setNotify] = useState(true);
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
-
-  useEffect(() => {
-    api.listBookings(f.date, f.date).then((rows) => setDayBookings(rows.filter((b) => b.status === 'confirmed' && b.id !== initial?.id)));
-  }, [f.date, initial?.id]);
-
-  const svc = data.services.find((s) => s.id === f.serviceId);
-  const hours = getDayHours(data, f.date);
-  const step = data.settings.slotStep || 15;
-  const times = [];
-  const from = hours.closed ? 540 : hours.openMin;
-  const to = hours.closed ? 1260 : hours.closeMin;
-  for (let m = from; m + (svc?.duration || 15) <= to; m += step) times.push(m);
-  if (f.startMin != null && !times.includes(Number(f.startMin))) times.unshift(Number(f.startMin));
-  const free = (m) => svc && barberFreeAt(data, dayBookings, f.barberId, f.date, m, m + svc.duration);
-  const off = isBarberUnavailable(data, f.barberId, f.date);
-
-  async function submit(e) {
-    e.preventDefault();
-    if (f.startMin == null || f.startMin === '') return setError('Pick a time.');
-    const startMin = Number(f.startMin);
-    const warnings = [];
-    if (hours.closed) warnings.push('the shop is closed that day');
-    if (off) warnings.push('that barber is marked unavailable that day');
-    if (!free(startMin)) warnings.push('it overlaps a break or another booking');
-    if (!hours.closed && startMin + svc.duration > hours.closeMin) warnings.push('it runs past closing time');
-    if (warnings.length && !window.confirm(`Heads up: ${warnings.join(', ')}. Save anyway?`)) return;
-    setBusy(true);
-    setError('');
-    try {
-      await onSave({ ...f, startMin, endMin: startMin + svc.duration, serviceName: svc.name }, notify);
-      onClose(true);
-    } catch (err) {
-      setError(err.message);
-    }
-    setBusy(false);
-  }
-
-  return (
-    <div className="modal-back">
-      <form className="modal" onSubmit={submit}>
-        <h3>{title}</h3>
-        {error && <div className="error">{error}</div>}
-        <div className="field">
-          <label>Customer name *</label>
-          <input type="text" required maxLength={100} value={f.customerName} onChange={set('customerName')} />
-        </div>
-        <div className="grid-2">
-          <div className="field">
-            <label>Phone</label>
-            <input type="tel" maxLength={30} value={f.phone || ''} onChange={set('phone')} />
-          </div>
-          <div className="field">
-            <label>Email (optional)</label>
-            <input type="email" maxLength={200} value={f.email || ''} onChange={set('email')} />
-          </div>
-        </div>
-        <div className="grid-2">
-          <div className="field">
-            <label>Service</label>
-            <select value={f.serviceId} onChange={set('serviceId')}>
-              {services.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.duration} min)</option>)}
-            </select>
-          </div>
-          <div className="field">
-            <label>Barber</label>
-            <select value={f.barberId} onChange={set('barberId')}>
-              {barbers.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="grid-2">
-          <div className="field">
-            <label>Date</label>
-            <input type="date" required value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} />
-          </div>
-          <div className="field">
-            <label>Time</label>
-            <select value={f.startMin ?? ''} onChange={set('startMin')}>
-              <option value="">Choose…</option>
-              {times.map((m) => (
-                <option key={m} value={m}>{minToLabel(m)}{free(m) ? '' : ' (busy)'}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {hours.closed && <div className="notice small">The shop is closed on this day.</div>}
-        {off && <div className="notice small">This barber is marked unavailable on this day.</div>}
-        <div className="field">
-          <label>Notes (only admins see this)</label>
-          <input type="text" maxLength={300} value={f.notes || ''} onChange={set('notes')} />
-        </div>
-        {isEdit && f.email && (
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email the customer if the time, barber or service changes
-          </label>
-        )}
-        <div className="btn-row" style={{ marginTop: 16 }}>
-          <button className="btn" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-          <button type="button" className="btn ghost" onClick={() => onClose(false)}>Close</button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function CancelForm({ booking, onClose }) {
-  const [reason, setReason] = useState('');
-  const [notify, setNotify] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  async function submit(e) {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      await api.cancelBooking(booking.id, reason.trim(), notify && !!booking.email);
-      onClose(true);
-    } catch (err) {
-      setError(err.message);
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="modal-back">
-      <form className="modal" onSubmit={submit}>
-        <h3>Cancel booking</h3>
-        <p>{booking.customerName} – {booking.serviceName}, {prettyDate(booking.date)} at {minToLabel(booking.startMin)}</p>
-        {error && <div className="error">{error}</div>}
-        <div className="field">
-          <label>Reason (included in the customer's email)</label>
-          <textarea maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Barber is unwell today" />
-        </div>
-        {booking.email ? (
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} /> Email {booking.email} to let them know
-          </label>
-        ) : (
-          <p className="muted small">No email on this booking – call {booking.phone || 'the customer'} to let them know.</p>
-        )}
-        <div className="btn-row" style={{ marginTop: 16 }}>
-          <button className="btn danger" disabled={busy}>Cancel booking</button>
-          <button type="button" className="btn ghost" onClick={() => onClose(false)}>Keep it</button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-function BookingCard({ b, onEdit, onCancel, showBarber, nameOf }) {
-  return (
-    <div className={`bk${b.source === 'admin' ? ' admin' : ''}${b.status === 'cancelled' ? ' cancelled' : ''}`}>
-      <div className="time">{minToLabel(b.startMin)} – {minToLabel(b.endMin)}</div>
-      <div>{b.customerName}{b.guestName ? ` (for ${b.guestName})` : ''} · {b.serviceName}{showBarber ? ` · ${nameOf(b.barberId)}` : ''}</div>
-      <div className="small muted">
-        {b.phone && <a href={`tel:${b.phone}`}>{b.phone}</a>} {b.source === 'admin' ? '· added by shop' : '· online'}
-        {b.notes ? ` · ${b.notes}` : ''}
-        {b.status === 'cancelled' && ` · cancelled by ${b.cancelledBy || 'shop'}${b.cancelReason ? `: ${b.cancelReason}` : ''}`}
-      </div>
-      {b.status === 'confirmed' && (
-        <div className="btn-row" style={{ marginTop: 6 }}>
-          <button className="btn ghost sm" onClick={() => onEdit(b)}>Edit</button>
-          <button className="btn ghost sm" onClick={() => onCancel(b)}>Cancel</button>
-        </div>
-      )}
-    </div>
-  );
-}
+import { BookingCard, BookingForm, CancelForm, weekStart } from './parts.jsx';
 
 export default function BookingsTab() {
   const { data } = useShop();
@@ -205,6 +22,18 @@ export default function BookingsTab() {
   const [showCancelled, setShowCancelled] = useState(false);
   const [modal, setModal] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState(null);
+
+  // Search as you type (short pause so we don't search on every key).
+  useEffect(() => {
+    if (q.trim().length < 2) {
+      setResults(null);
+      return;
+    }
+    const t = setTimeout(() => api.searchBookings(q).then(setResults).catch(() => setResults([])), 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const range = useMemo(() => (view === 'day' ? [date, date] : [weekStart(date), addDays(weekStart(date), 6)]), [view, date]);
   const load = useCallback(async () => {
@@ -220,9 +49,21 @@ export default function BookingsTab() {
   const visible = rows.filter((b) => showCancelled || b.status === 'confirmed').sort((a, b) => a.date.localeCompare(b.date) || a.startMin - b.startMin);
   const close = (changed) => {
     setModal(null);
-    if (changed) load();
+    if (changed) {
+      load();
+      if (q.trim().length >= 2) api.searchBookings(q).then(setResults);
+    }
   };
-  const cardProps = { onEdit: (b) => setModal({ type: 'edit', booking: b }), onCancel: (b) => setModal({ type: 'cancel', booking: b }), nameOf };
+  const toggleNoShow = async (b) => {
+    await api.setNoShow(b.id, !b.noShow);
+    close(true);
+  };
+  const cardProps = {
+    onEdit: (b) => setModal({ type: 'edit', booking: b }),
+    onCancel: (b) => setModal({ type: 'cancel', booking: b }),
+    onNoShow: toggleNoShow,
+    nameOf,
+  };
 
   const hours = getDayHours(data, date);
   const barberCols = activeBarbers(data);
@@ -230,6 +71,17 @@ export default function BookingsTab() {
   return (
     <div>
       <h2>Bookings</h2>
+      <div className="search-row no-print">
+        <input type="text" placeholder="Search by name, phone or email…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search bookings" />
+        {q && <button className="btn ghost sm" onClick={() => setQ('')}>Clear</button>}
+      </div>
+      {results && (
+        <div style={{ marginBottom: 24 }}>
+          <h3>{results.length} result{results.length === 1 ? '' : 's'} for “{q}”</h3>
+          {results.map((b) => <BookingCard key={b.id} b={b} showBarber showDate {...cardProps} />)}
+        </div>
+      )}
+      <div className="print-only"><h2>NYC Barbershop – {view === 'day' ? prettyDate(date) : `Week of ${prettyDate(range[0])}`}</h2></div>
       <div className="toolbar">
         <div className="btn-row">
           <button className={`btn sm${view === 'day' ? '' : ' ghost'}`} onClick={() => setView('day')}>Day</button>
@@ -245,6 +97,7 @@ export default function BookingsTab() {
           <input type="checkbox" checked={showCancelled} onChange={(e) => setShowCancelled(e.target.checked)} /> Show cancelled
         </label>
         <button className="btn sm" onClick={() => setModal({ type: 'new' })}>+ Add booking (phone / walk-in)</button>
+        <button className="btn ghost sm" onClick={() => window.print()}>Print</button>
       </div>
 
       {view === 'day' ? (

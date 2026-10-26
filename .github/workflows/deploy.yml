@@ -63,11 +63,9 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_SITE_URL: ${{ vars.SITE_URL }}
           BASE_PATH: ${{ vars.BASE_PATH || '/nyc-barbershop/' }}
-        run: |
-          npm run build
-          cp dist/index.html dist/404.html
-          touch dist/.nojekyll
+        run: npm run build
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
