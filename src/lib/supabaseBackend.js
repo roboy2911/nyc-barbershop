@@ -111,8 +111,24 @@ export function makeSupabaseBackend(url, anonKey) {
     // ---------------- admin login (email + password) ----------------
     auth: {
       async signIn(email, password) {
-        const { error } = await (await client()).auth.signInWithPassword({ email, password });
-        if (error) throw new Error('Wrong email or password.');
+        const sb = await client();
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          const code = error.code || '';
+          if (code === 'email_not_confirmed') throw new Error('This email address hasn\'t been confirmed yet. In Supabase → Authentication → Users, open the user and confirm them.');
+          if (code.includes('rate_limit') || error.status === 429) throw new Error('Too many attempts. Please wait a few minutes and try again.');
+          if (code === 'invalid_credentials') throw new Error('Wrong email or password. Use “Forgot password” if you\'re not sure.');
+          throw new Error(`Couldn't sign in: ${error.message}`);
+        }
+        const { data: row, error: rowErr } = await sb.from('admins').select('user_id').eq('user_id', data.user.id).maybeSingle();
+        if (rowErr || !row) {
+          await sb.auth.signOut();
+          throw new Error(
+            rowErr
+              ? `Signed in, but couldn't check admin access: ${rowErr.message}`
+              : 'Your password is correct, but this account isn\'t on the admin list yet. Add it with the SQL step in SETUP.md (insert into public.admins …).',
+          );
+        }
         return { step: 'done' };
       },
       async getAdmin() {

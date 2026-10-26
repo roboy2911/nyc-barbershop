@@ -62,9 +62,12 @@ export default function Admin() {
 
   const check = useCallback(async () => {
     try {
-      setAdmin(await api.auth.getAdmin());
+      const a = await api.auth.getAdmin();
+      setAdmin(a);
+      return !!a;
     } catch {
       setAdmin(null);
+      return false;
     }
   }, []);
 

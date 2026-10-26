@@ -24,7 +24,8 @@ export default function Login({ onDone }) {
   const signIn = run(async () => {
     await api.auth.signIn(email.trim(), password);
     setPassword('');
-    onDone();
+    const ok = await onDone();
+    if (ok === false) throw new Error('Signed in, but the admin page could not load your account. Please refresh and try again.');
   });
 
   const forgot = run(async () => {
