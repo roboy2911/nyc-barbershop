@@ -506,3 +506,4 @@ h2 { letter-spacing: 0.08em; }
 .foot-hours td { padding: 3px 14px 3px 0; }
 .foot-hours tr.today td { color: var(--text); font-weight: 600; }
 .foot-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.btn.btn-del:hover { border-color: var(--danger); color: #ffb3b3; background: #2a1414; }

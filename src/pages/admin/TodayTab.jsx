@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useShop } from '../../App.jsx';
 import { money } from '../Services.jsx';
-import { BookingCard, BookingForm, CancelForm, weekStart } from './parts.jsx';
+import { BookingCard, BookingForm, CancelForm, confirmAndDelete, weekStart } from './parts.jsx';
 import {
   addDays,
   barberFreeAt,
@@ -64,6 +64,9 @@ export default function TodayTab() {
   const cardProps = {
     onEdit: (b) => setModal({ type: 'edit', booking: b }),
     onCancel: (b) => setModal({ type: 'cancel', booking: b }),
+    onDelete: async (b) => {
+      if (await confirmAndDelete(b)) close(true);
+    },
     onNoShow: async (b) => {
       await api.setNoShow(b.id, !b.noShow);
       load();

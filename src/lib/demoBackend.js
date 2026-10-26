@@ -326,6 +326,9 @@ export const demoBackend = {
     const s = load();
     return { exported_at: new Date().toISOString(), ...s.data, bookings: s.bookings, contact_messages: s.messages };
   },
+  async deleteBooking(id) {
+    mutate((s) => (s.bookings = s.bookings.filter((b) => b.id !== id)));
+  },
   async setNoShow(id, value) {
     mutate((s) => (s.bookings.find((b) => b.id === id).noShow = value));
   },

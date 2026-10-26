@@ -248,6 +248,11 @@ export function makeSupabaseBackend(url, anonKey) {
       await sb.storage.from('gallery').remove([photo.path, photo.thumbPath]);
       must(await sb.from('gallery_photos').delete().eq('id', photo.id));
     },
+    async deleteBooking(id) {
+      const { data, error } = await (await client()).from('bookings').delete().eq('id', id).select('id');
+      if (error) throw new Error(error.message);
+      if (!data?.length) throw new Error('Not allowed – please sign in again.');
+    },
     async setNoShow(id, value) {
       must(await (await client()).from('bookings').update({ no_show: value, updated_at: new Date().toISOString() }).eq('id', id));
     },

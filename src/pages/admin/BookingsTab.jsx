@@ -12,7 +12,7 @@ import {
   qldNow,
 } from '../../../supabase/functions/_shared/availability.js';
 
-import { BookingCard, BookingForm, CancelForm, weekStart } from './parts.jsx';
+import { BookingCard, BookingForm, CancelForm, confirmAndDelete, weekStart } from './parts.jsx';
 
 export default function BookingsTab() {
   const { data } = useShop();
@@ -61,6 +61,9 @@ export default function BookingsTab() {
   const cardProps = {
     onEdit: (b) => setModal({ type: 'edit', booking: b }),
     onCancel: (b) => setModal({ type: 'cancel', booking: b }),
+    onDelete: async (b) => {
+      if (await confirmAndDelete(b)) close(true);
+    },
     onNoShow: toggleNoShow,
     nameOf,
   };

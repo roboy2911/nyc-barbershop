@@ -177,7 +177,24 @@ export function CancelForm({ booking, onClose }) {
   );
 }
 
-export function BookingCard({ b, onEdit, onCancel, onNoShow, showBarber, showDate, nameOf }) {
+// Permanently delete a booking after a clear warning. Returns true if deleted.
+export async function confirmAndDelete(b) {
+  const when = `${prettyDate(b.date, { weekday: 'short', day: 'numeric', month: 'short' })} at ${minToLabel(b.startMin)}`;
+  const msg =
+    `Permanently delete ${b.customerName}'s booking (${b.serviceName}, ${when})?\n\n` +
+    'It will be removed completely and the customer will NOT be told.' +
+    (b.status === 'confirmed' ? '\n\nTo let them know, use Cancel instead.' : '');
+  if (!window.confirm(msg)) return false;
+  try {
+    await api.deleteBooking(b.id);
+    return true;
+  } catch (e) {
+    window.alert(`Couldn't delete: ${e.message}`);
+    return false;
+  }
+}
+
+export function BookingCard({ b, onEdit, onCancel, onNoShow, onDelete, showBarber, showDate, nameOf }) {
   const past = b.date < qldNow().date || (b.date === qldNow().date && b.startMin <= qldNow().minutes);
   return (
     <div className={`bk${b.source === 'admin' ? ' admin' : ''}${b.status === 'cancelled' ? ' cancelled' : ''}${b.noShow ? ' noshow' : ''}`}>
@@ -194,13 +211,14 @@ export function BookingCard({ b, onEdit, onCancel, onNoShow, showBarber, showDat
         {b.notes ? ` · ${b.notes}` : ''}
         {b.status === 'cancelled' && ` · cancelled by ${b.cancelledBy || 'shop'}${b.cancelReason ? `: ${b.cancelReason}` : ''}`}
       </div>
-      {b.status === 'confirmed' && (onEdit || onNoShow) && (
+      {(onEdit || onNoShow || onDelete) && (
         <div className="btn-row" style={{ marginTop: 6 }}>
-          {onEdit && <button className="btn ghost sm" onClick={() => onEdit(b)}>Edit</button>}
-          {onCancel && !past && <button className="btn ghost sm" onClick={() => onCancel(b)}>Cancel</button>}
-          {onNoShow && past && (
+          {b.status === 'confirmed' && onEdit && <button className="btn ghost sm" onClick={() => onEdit(b)}>Edit</button>}
+          {b.status === 'confirmed' && onCancel && !past && <button className="btn ghost sm" onClick={() => onCancel(b)}>Cancel</button>}
+          {b.status === 'confirmed' && onNoShow && past && (
             <button className="btn ghost sm" onClick={() => onNoShow(b)}>{b.noShow ? 'Undo no-show' : 'Mark no-show'}</button>
           )}
+          {onDelete && <button className="btn ghost sm btn-del" onClick={() => onDelete(b)}>Delete</button>}
         </div>
       )}
     </div>

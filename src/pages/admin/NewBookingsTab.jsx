@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api.js';
 import { useShop } from '../../App.jsx';
-import { BookingCard } from './parts.jsx';
+import { BookingCard, confirmAndDelete } from './parts.jsx';
 
 const SEEN_KEY = 'nyc-admin-bookings-seen';
 
@@ -50,7 +50,15 @@ export default function NewBookingsTab({ onSeen }) {
             Booked {b.createdAt ? when(b.createdAt) : ''} {b.source === 'online' ? 'online' : 'by the shop'}
             {seen && b.createdAt > seen && <span className="tag" style={{ background: '#1d3b22', color: '#9be3a4' }}>New</span>}
           </div>
-          <BookingCard b={b} showBarber showDate nameOf={nameOf} />
+          <BookingCard
+            b={b}
+            showBarber
+            showDate
+            nameOf={nameOf}
+            onDelete={async (x) => {
+              if (await confirmAndDelete(x)) setRows((r) => r.filter((y) => y.id !== x.id));
+            }}
+          />
         </div>
       ))}
     </div>
