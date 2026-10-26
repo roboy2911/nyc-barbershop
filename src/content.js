@@ -34,7 +34,7 @@ export const ABOUT = {
   ],
 };
 
-// PLACEHOLDER reviews – replace with real ones.
+// Starting reviews for demo mode only. On the live site, reviews are managed in Admin -> Reviews.
 export const REVIEWS = [
   { name: 'Placeholder Customer', stars: 5, text: 'Placeholder review – best fade I have had on the Gold Coast. Friendly crew and always on time.' },
   { name: 'Placeholder Customer', stars: 5, text: 'Placeholder review – booked online, walked straight in to the chair. Beard has never looked better.' },

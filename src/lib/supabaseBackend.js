@@ -63,7 +63,7 @@ export function makeSupabaseBackend(url, anonKey) {
     mode: 'live',
 
     async loadData() {
-      const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours] = await Promise.all([
+      const [settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours, reviews] = await Promise.all([
         table('settings', 'select=*&id=eq.1'),
         table('services'),
         table('barbers'),
@@ -72,9 +72,10 @@ export function makeSupabaseBackend(url, anonKey) {
         table('barber_unavailability'),
         table('breaks'),
         table('barber_hours').catch(() => []),
+        table('reviews', 'select=*&order=sort.asc').catch(() => []),
       ]);
       if (!settings?.[0]) throw new Error('Shop settings are missing – has the database been set up?');
-      return assembleData({ settings: settings[0], services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours });
+      return assembleData({ settings: settings[0], services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours, reviews });
     },
     async getBusy(from, to) {
       return (await request('/rest/v1/rpc/get_busy', { method: 'POST', body: { from_date: from, to_date: to } })).map(fromDb.busy);
@@ -215,7 +216,7 @@ export function makeSupabaseBackend(url, anonKey) {
     },
     async exportAll() {
       const sb = await client();
-      const tables = ['settings', 'services', 'barbers', 'barber_hours', 'weekly_hours', 'special_days', 'barber_unavailability', 'breaks', 'bookings', 'contact_messages', 'gallery_photos'];
+      const tables = ['settings', 'services', 'barbers', 'barber_hours', 'weekly_hours', 'special_days', 'barber_unavailability', 'breaks', 'bookings', 'contact_messages', 'gallery_photos', 'reviews'];
       const out = { exported_at: new Date().toISOString() };
       for (const t of tables) {
         const rows = [];
@@ -247,6 +248,18 @@ export function makeSupabaseBackend(url, anonKey) {
       const sb = await client();
       await sb.storage.from('gallery').remove([photo.path, photo.thumbPath]);
       must(await sb.from('gallery_photos').delete().eq('id', photo.id));
+    },
+    async listAllReviews() {
+      return must(await (await client()).from('reviews').select('*').order('sort')).map(fromDb.review);
+    },
+    async saveReview(r) {
+      const sb = await client();
+      const row = { name: r.name, stars: r.stars, text: r.text, visible: r.visible, sort: r.sort ?? 0 };
+      if (r.id) must(await sb.from('reviews').update(row).eq('id', r.id));
+      else must(await sb.from('reviews').insert(row));
+    },
+    async deleteReview(id) {
+      must(await (await client()).from('reviews').delete().eq('id', id));
     },
     async deleteBooking(id) {
       const { data, error } = await (await client()).from('bookings').delete().eq('id', id).select('id');

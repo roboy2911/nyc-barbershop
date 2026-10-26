@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
-import { REVIEWS, SHOP } from '../content.js';
+import { SHOP } from '../content.js';
+import { useShop } from '../App.jsx';
 import GoogleBadge from '../components/GoogleBadge.jsx';
 import Icon from '../components/Icon.jsx';
 
 export default function Reviews() {
+  const { data } = useShop();
+  const REVIEWS = data.reviews || [];
   return (
     <>
       <div className="page-head">
@@ -14,6 +17,7 @@ export default function Reviews() {
       </div>
       <div className="container page">
         <div className="center" style={{ marginBottom: 24 }}><GoogleBadge /></div>
+        {!REVIEWS.length && <p className="center muted">No reviews yet – be the first!</p>}
         <div className="reviews">
           {REVIEWS.map((r, i) => (
             <div className="review" key={i}>

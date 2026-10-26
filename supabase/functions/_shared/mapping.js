@@ -35,6 +35,7 @@ export const fromDb = {
     repeatUntil: r.repeat_until,
     label: r.label,
   }),
+  review: (r) => ({ id: r.id, name: r.name, stars: r.stars, text: r.text, visible: r.visible, sort: r.sort }),
   barberHours: (r) => ({ barberId: r.barber_id, dow: r.dow, off: r.off, startMin: r.start_min, endMin: r.end_min }),
   busy: (r) => ({ barberId: r.barber_id, date: r.booking_date, startMin: r.start_min, endMin: r.end_min }),
   booking: (r) => ({
@@ -109,7 +110,7 @@ export const toDb = {
   }),
 };
 
-export function assembleData({ settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours = [] }) {
+export function assembleData({ settings, services, barbers, weeklyHours, specialDays, unavailability, breaks, barberHours = [], reviews = [] }) {
   return {
     settings: fromDb.settings(settings),
     services: services.map(fromDb.service).sort((a, b) => a.sort - b.sort),
@@ -119,5 +120,6 @@ export function assembleData({ settings, services, barbers, weeklyHours, special
     unavailability: unavailability.map(fromDb.unavailability),
     breaks: breaks.map(fromDb.break),
     barberHours: barberHours.map(fromDb.barberHours),
+    reviews: reviews.map(fromDb.review).sort((a, b) => a.sort - b.sort),
   };
 }

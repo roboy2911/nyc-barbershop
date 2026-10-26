@@ -14,6 +14,7 @@ import {
   bookingChangedEmail,
 } from '../../supabase/functions/_shared/emails.js';
 import { blobToDataUrl, resizeImage } from './images.js';
+import { REVIEWS } from '../content.js';
 
 const GALLERY_KEY = 'nyc-demo-gallery';
 const readGallery = () => {
@@ -64,6 +65,7 @@ function seed() {
     specialDays: [],
     unavailability: [],
     barberHours: [],
+    reviews: REVIEWS.map((r, i) => ({ ...r, id: uid(), visible: true, sort: i })),
     breaks: [
       { id: uid(), barberId: tom, startDate: qldNow().date, startMin: 720, endMin: 750, repeat: 'daily', repeatDays: [], repeatUntil: null, label: 'Lunch' },
     ],
@@ -155,7 +157,9 @@ export const demoBackend = {
   mode: 'demo',
 
   async loadData() {
-    return delay(load().data);
+    const d = load().data;
+    const reviews = d.reviews || REVIEWS.map((r, i) => ({ ...r, id: `seed${i}`, visible: true, sort: i }));
+    return delay({ ...d, reviews: reviews.filter((r) => r.visible).sort((a, b) => a.sort - b.sort) });
   },
   async getBusy(from, to) {
     return delay(confirmed(load()).filter((b) => b.date >= from && b.date <= to).map(toBusy));
@@ -325,6 +329,19 @@ export const demoBackend = {
   async exportAll() {
     const s = load();
     return { exported_at: new Date().toISOString(), ...s.data, bookings: s.bookings, contact_messages: s.messages };
+  },
+  async listAllReviews() {
+    const d = load().data;
+    return (d.reviews || REVIEWS.map((r, i) => ({ ...r, id: uid(), visible: true, sort: i }))).sort((a, b) => a.sort - b.sort);
+  },
+  async saveReview(r) {
+    mutate((s) => {
+      const list = s.data.reviews || REVIEWS.map((x, i) => ({ ...x, id: uid(), visible: true, sort: i }));
+      s.data.reviews = r.id ? list.map((x) => (x.id === r.id ? { ...x, ...r } : x)) : [...list, { ...r, id: uid() }];
+    });
+  },
+  async deleteReview(id) {
+    mutate((s) => (s.data.reviews = (s.data.reviews || []).filter((x) => x.id !== id)));
   },
   async deleteBooking(id) {
     mutate((s) => (s.bookings = s.bookings.filter((b) => b.id !== id)));

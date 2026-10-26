@@ -8,6 +8,7 @@ import CustomersTab from './CustomersTab.jsx';
 import NewBookingsTab, { lastSeen } from './NewBookingsTab.jsx';
 import StatsTab from './StatsTab.jsx';
 import PhotosTab from './PhotosTab.jsx';
+import ReviewsTab from './ReviewsTab.jsx';
 import HoursTab from './HoursTab.jsx';
 import BarbersTab from './BarbersTab.jsx';
 import BreaksTab from './BreaksTab.jsx';
@@ -30,6 +31,7 @@ const TABS = [
   ['breaks', 'Breaks', BreaksTab],
   ['services', 'Services & prices', ServicesTab],
   ['photos', 'Photos', PhotosTab],
+  ['reviews', 'Reviews', ReviewsTab],
   ['settings', 'Settings', SettingsTab],
   ['messages', 'Messages', MessagesTab],
   ['account', 'Account & password', AccountTab],

@@ -1,8 +1,11 @@
-import { REVIEWS } from '../content.js';
+import { useShop } from '../App.jsx';
 
 // Reviews that slowly scroll sideways. Pauses on hover/touch; stays still for
 // people who prefer reduced motion (they can swipe it instead).
 export default function ReviewStrip() {
+  const { data } = useShop();
+  const REVIEWS = data.reviews || [];
+  if (!REVIEWS.length) return null;
   const card = (r, i, hidden) => (
     <div className="review" key={`${hidden ? 'b' : 'a'}${i}`} aria-hidden={hidden || undefined}>
       <div className="stars" aria-label={hidden ? undefined : `${r.stars} out of 5 stars`}>{'★'.repeat(r.stars)}</div>
