@@ -24,7 +24,7 @@ export const telHref = (phone) => `tel:+61${String(phone || '').replace(/\D/g, '
 export const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${SHOP.lat},${SHOP.lng}&travelmode=driving`;
 export const mapEmbedUrl = `https://maps.google.com/maps?q=${SHOP.lat},${SHOP.lng}&z=17&output=embed`;
 
-// DRAFT – for the shop owner to edit.
+// Starting text for demo mode only. On the live site, edit it in Admin -> Website -> About the shop.
 export const ABOUT = {
   heading: 'Old-school craft. New York attitude.',
   paragraphs: [

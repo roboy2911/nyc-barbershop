@@ -9,6 +9,7 @@ import NewBookingsTab, { lastSeen } from './NewBookingsTab.jsx';
 import StatsTab from './StatsTab.jsx';
 import PhotosTab from './PhotosTab.jsx';
 import ReviewsTab from './ReviewsTab.jsx';
+import AboutTab from './AboutTab.jsx';
 import HoursTab from './HoursTab.jsx';
 import BarbersTab from './BarbersTab.jsx';
 import BreaksTab from './BreaksTab.jsx';
@@ -61,6 +62,7 @@ const GROUPS = [
     id: 'website',
     label: 'Website',
     tabs: [
+      ['about', 'About the shop', AboutTab],
       ['services', 'Services & prices', ServicesTab],
       ['photos', 'Photos', PhotosTab],
       ['reviews', 'Reviews', ReviewsTab],

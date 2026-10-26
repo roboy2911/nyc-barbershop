@@ -9,6 +9,8 @@ export const fromDb = {
     publicEmail: r.public_email,
     phone: r.phone,
     banner: r.banner,
+    aboutHeading: r.about_heading,
+    aboutText: r.about_text,
   }),
   service: (r) => ({
     id: r.id,
@@ -71,6 +73,8 @@ export const toDb = {
     public_email: s.publicEmail,
     phone: s.phone,
     banner: s.banner || null,
+    about_heading: s.aboutHeading ?? null,
+    about_text: s.aboutText ?? null,
   }),
   service: (s) => ({
     name: s.name,

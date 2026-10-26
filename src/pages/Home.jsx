@@ -38,6 +38,10 @@ export default function Home() {
   const { phone, publicEmail } = data.settings;
   const services = data.services.filter((s) => s.active);
   const thursday = data.weeklyHours.find((w) => w.dow === 4);
+  const aboutHeading = data.settings.aboutHeading ?? ABOUT.heading;
+  const aboutParas = data.settings.aboutText != null
+    ? data.settings.aboutText.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : ABOUT.paragraphs;
   const openDays = data.weeklyHours.filter((w) => !w.closed).length;
   const lateThursday = thursday && !thursday.closed && thursday.closeMin >= 1140;
 
@@ -75,11 +79,13 @@ export default function Home() {
         <div className="container about">
           <div className="reveal">
             <h2>About the shop</h2>
-            <h3 style={{ color: 'var(--text)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--body)', fontWeight: 600 }}>
-              {ABOUT.heading}
-            </h3>
-            {ABOUT.paragraphs.map((p) => (
-              <p key={p.slice(0, 20)} className="muted">{p}</p>
+            {aboutHeading && (
+              <h3 style={{ color: 'var(--text)', textTransform: 'none', letterSpacing: 0, fontFamily: 'var(--body)', fontWeight: 600 }}>
+                {aboutHeading}
+              </h3>
+            )}
+            {aboutParas.map((p, i) => (
+              <p key={i} className="muted">{p}</p>
             ))}
           </div>
           <div className="reveal">
