@@ -9,7 +9,7 @@ const html = readFileSync('dist/index.html', 'utf8');
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 function pageHtml(path, { title, description }, extraHead = '') {
-  const url = `${site}${path === '/' ? '/' : path}`;
+  const url = `${site}${path === '/' ? '/' : `${path}/`}`;
   return html
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
     .replace(/(<meta name="description" content=")[^"]*/, `$1${esc(description)}`)
@@ -37,7 +37,7 @@ const today = new Date().toISOString().slice(0, 10);
 writeFileSync(
   'dist/sitemap.xml',
   `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-    Object.keys(PAGES).map((p) => `  <url><loc>${site}${p === '/' ? '/' : p}</loc><lastmod>${today}</lastmod></url>`).join('\n') +
+    Object.keys(PAGES).map((p) => `  <url><loc>${site}${p === '/' ? '/' : `${p}/`}</loc><lastmod>${today}</lastmod></url>`).join('\n') +
     '\n</urlset>\n',
 );
 writeFileSync('dist/robots.txt', `User-agent: *\nDisallow: /admin\nDisallow: /cancel\nSitemap: ${site}/sitemap.xml\n`);

@@ -513,3 +513,4 @@ h2 { letter-spacing: 0.08em; }
 .subtabs button.on { color: var(--text); border-bottom-color: var(--text); }
 .site-footer a, .foot-line a, .info-list a { overflow-wrap: anywhere; min-width: 0; }
 .foot-line { min-width: 0; }
+p.center, .center > p { margin-left: auto; margin-right: auto; }
