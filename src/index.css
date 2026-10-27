@@ -511,3 +511,5 @@ h2 { letter-spacing: 0.08em; }
 .subtabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 14px; color: var(--muted); cursor: pointer; white-space: nowrap; font-size: 0.95rem; }
 .subtabs button:hover { color: var(--text); }
 .subtabs button.on { color: var(--text); border-bottom-color: var(--text); }
+.site-footer a, .foot-line a, .info-list a { overflow-wrap: anywhere; min-width: 0; }
+.foot-line { min-width: 0; }
