@@ -32,7 +32,6 @@ export default function Reviews() {
           <p className="muted">We'd really appreciate a quick review – it helps other locals find us.</p>
           <div className="review-cta">
             <a className="btn" href={reviewUrl(data.settings)} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
-            <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">See us on Google Maps</a>
           </div>
         </div>
         <div className="center" style={{ marginTop: 24 }}>

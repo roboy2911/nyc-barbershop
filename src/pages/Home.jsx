@@ -175,7 +175,6 @@ export default function Home() {
           </div>
           <div className="btn-row" style={{ justifyContent: 'center', marginTop: 18 }}>
             <a className="btn" href={directionsUrl} target="_blank" rel="noreferrer"><Icon name="pin" size={16} /> Get directions</a>
-            <a className="btn ghost" href={SHOP.googleMaps} target="_blank" rel="noreferrer">Open in Google Maps</a>
           </div>
         </div>
       </section>
