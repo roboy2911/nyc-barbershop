@@ -3,7 +3,6 @@ import { useShop } from '../App.jsx';
 import HoursDropdown from '../components/HoursDropdown.jsx';
 import Gallery from '../components/Gallery.jsx';
 import Icon, { serviceIcon } from '../components/Icon.jsx';
-import GoogleBadge from '../components/GoogleBadge.jsx';
 import ReviewStrip from '../components/ReviewStrip.jsx';
 import { ABOUT, SHOP, directionsUrl, mapEmbedUrl, reviewUrl, telHref } from '../content.js';
 import { money } from './Services.jsx';
@@ -145,12 +144,10 @@ export default function Home() {
       <section className="section" id="reviews">
         <div className="container">
           <Title>What customers say</Title>
-          <div className="center" style={{ marginTop: -18, marginBottom: 26 }}><GoogleBadge /></div>
         </div>
         <ReviewStrip />
         <div className="container center" style={{ marginTop: 26 }}>
           <div className="review-cta">
-            <Link to="/reviews" className="btn ghost">All reviews</Link>
             <a className="btn ghost" href={reviewUrl(data.settings)} target="_blank" rel="noreferrer"><Icon name="google" size={16} /> Review us on Google</a>
           </div>
         </div>
