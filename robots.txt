@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /admin
+Disallow: /cancel
+Sitemap: https://roboy2911.github.io/nyc-barbershop/sitemap.xml
